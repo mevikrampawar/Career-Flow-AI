@@ -1,7 +1,7 @@
 name: Build and Publish to GitHub Pages (single branch)
 
 # Everything stays on `main`. The workflow builds the app and commits the
-# output to `dist/` on main; GitHub Pages serves the repo's main/dist folder
+# output to `docs/` on main; GitHub Pages serves the repo's main/docs folder
 # directly (legacy build). Pushes made by GITHUB_TOKEN do NOT re-trigger
 # workflows, so there is no loop.
 on:
@@ -40,9 +40,12 @@ jobs:
 
       - name: Commit built app to main
         run: |
+          rm -rf docs
+          cp -r dist docs
+          touch docs/.nojekyll
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f dist
+          git add -f docs
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
