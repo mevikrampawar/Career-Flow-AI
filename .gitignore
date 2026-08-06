@@ -1,9 +1,8 @@
 # deps
 node_modules/
 
-# build
+# build (committed to main by the deploy workflow via `git add -f dist`)
 dist/
-dist-ssr/
 *.local
 
 # env / secrets
