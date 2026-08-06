@@ -19,7 +19,12 @@ export function Modal({
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -30,7 +35,7 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className={`w-full ${wide ? "max-w-3xl" : "max-w-lg"} max-h-[88vh] overflow-auto rounded-lg bg-surface-container-lowest p-6 shadow-modal`}
+        className={`w-full ${wide ? "max-w-3xl" : "max-w-lg"} max-h-[88vh] overflow-auto rounded-xl bg-surface-container-lowest p-6 shadow-modal`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -39,7 +44,7 @@ export function Modal({
           <h2 className="text-headline-md text-on-surface">{title}</h2>
           <button
             onClick={onClose}
-            className="grid size-8 place-items-center rounded-sm text-on-surface-variant hover:bg-surface-container"
+            className="grid size-8 place-items-center rounded-lg text-on-surface-variant hover:bg-surface-container"
             aria-label="Close"
           >
             ✕

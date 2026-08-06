@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto rounded-sm border px-4 py-3 text-body-sm shadow-modal backdrop-blur ${
+            className={`pointer-events-auto rounded-lg border px-4 py-3 text-body-sm shadow-modal backdrop-blur ${
               t.kind === "success"
                 ? "border-success/30 bg-success-container text-on-success-container"
                 : t.kind === "error"

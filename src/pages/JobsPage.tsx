@@ -8,6 +8,7 @@ import type { JobPosting, JobSearchParams } from "../lib/types";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Field, Input, Select } from "../components/ui/Input";
+import { Icon } from "../components/ui/Icon";
 import { JobCard } from "../components/JobCard";
 import { useToast } from "../components/ui/Toast";
 
@@ -89,15 +90,24 @@ export default function JobsPage() {
   const results = searchJobsState;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-headline-lg text-on-surface">Job hunt</h1>
-        <p className="mt-1 text-body-sm text-on-surface-variant">
-          Scrape live openings via Apify, then AI-score them against your resume.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+            Job Matcher
+          </h1>
+          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+            Discover roles tailored to your profile and experience.
+          </p>
+        </div>
+        {results.length > 0 && (
+          <span className="inline-flex items-center gap-2 rounded-full border border-variant bg-surface-container-lowest px-4 py-2 font-label-md text-label-md text-on-surface">
+            {results.length} results
+          </span>
+        )}
+      </section>
 
-      <Card className="p-5">
+      <Card className="p-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Field label="Job title / keywords">
@@ -146,7 +156,7 @@ export default function JobsPage() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 text-body-sm text-on-surface">
+          <label className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface">
             <input
               type="checkbox"
               checked={params.remoteOnly}
@@ -156,12 +166,13 @@ export default function JobsPage() {
             Remote only
           </label>
           <Button onClick={onScrape} loading={scraping} className="ml-auto">
+            <Icon name="travel_explore" size={18} />
             {scraping ? "Scraping…" : "Hunt jobs"}
           </Button>
         </div>
-        {error && <p className="mt-3 text-body-sm text-error">{error}</p>}
+        {error && <p className="mt-3 font-body-sm text-body-sm text-error">{error}</p>}
         {progress && (
-          <p className="mt-3 flex items-center gap-2 text-body-sm text-on-surface-variant">
+          <p className="mt-3 flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
             <Spinner className="size-4" /> {progress}
           </p>
         )}
@@ -169,12 +180,12 @@ export default function JobsPage() {
 
       {results.length > 0 && (
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-headline-md text-on-surface">
+          <div className="mb-6">
+            <h2 className="font-headline-md text-headline-md text-on-surface">
               {results.length} results
             </h2>
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2 xl:grid-cols-3">
             {results.map((job) => (
               <JobCard
                 key={job.id}
@@ -190,17 +201,19 @@ export default function JobsPage() {
       )}
 
       {!hasApify && (
-        <p className="rounded-sm border border-warning/40 bg-warning-container px-3 py-2 text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+          <Icon name="key" size={18} />
           You need an Apify API token (free tier available) to scrape jobs.{" "}
-          <button className="underline" onClick={() => navigate("/app/settings")}>
+          <button className="font-semibold underline" onClick={() => navigate("/app/settings")}>
             Add it in Settings
           </button>
         </p>
       )}
       {!resume && (
-        <p className="rounded-sm border border-warning/40 bg-warning-container px-3 py-2 text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+          <Icon name="description" size={18} />
           Upload a resume to unlock AI match scoring.{" "}
-          <button className="underline" onClick={() => navigate("/app/resume")}>
+          <button className="font-semibold underline" onClick={() => navigate("/app/resume")}>
             Go to Resume
           </button>
         </p>

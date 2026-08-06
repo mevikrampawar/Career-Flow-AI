@@ -4,13 +4,14 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline-danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-medium rounded-sm transition-colors " +
+  "inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors " +
   "focus-ring disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-primary-container text-on-primary hover:opacity-90 active:opacity-80",
+  primary:
+    "bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary active:opacity-90",
   secondary:
-    "bg-transparent text-primary border border-outline-variant hover:bg-surface-container-low",
+    "bg-surface text-on-surface border border-border-variant hover:bg-surface-container-low",
   ghost: "bg-transparent text-on-surface hover:bg-surface-container",
   danger: "bg-error-container text-on-error-container hover:opacity-90",
   "outline-danger": "bg-transparent text-error border border-error/40 hover:bg-error-container/40",

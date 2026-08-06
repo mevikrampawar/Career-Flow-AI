@@ -50,31 +50,30 @@ export function KeysProvider({ children }: { children: ReactNode }) {
   const [keys, setKeysState] = useState<ApiKeys>(readLocal);
   const [syncing, setSyncing] = useState(false);
 
-  // Hydrate from Firestore when signed in (Firestore wins over local).
+  // Hydrate from Firestore when signed in (Firestore wins over local), then
+  // keep the live snapshot subscribed so changes from other devices propagate.
   useEffect(() => {
     if (!user || !isFirebaseConfigured) return;
     setSyncing(true);
-    let unsub: (() => void) | undefined;
 
+    const apply = (remote: { groqApiKey?: string; apifyApiToken?: string } | null) => {
+      const local = readLocal();
+      const merged: ApiKeys = {
+        groqApiKey: remote?.groqApiKey ?? local.groqApiKey,
+        apifyApiToken: remote?.apifyApiToken ?? local.apifyApiToken,
+      };
+      setKeysState(merged);
+      localStorage.setItem(LS_KEY, JSON.stringify(merged));
+    };
+
+    let unsub: (() => void) | undefined;
     fetchKeysFromFirestore(user.uid)
       .then((remote) => {
-        if (remote) {
-          const merged: ApiKeys = {
-            groqApiKey: remote.groqApiKey ?? readLocal().groqApiKey,
-            apifyApiToken: remote.apifyApiToken ?? readLocal().apifyApiToken,
-          };
-          setKeysState(merged);
-          localStorage.setItem(LS_KEY, JSON.stringify(merged));
-        }
-        unsub = onKeysSnapshot(user.uid, (snap) => {
-          if (!snap) return;
-          const next: ApiKeys = {
-            groqApiKey: snap.groqApiKey ?? readLocal().groqApiKey,
-            apifyApiToken: snap.apifyApiToken ?? readLocal().apifyApiToken,
-          };
-          setKeysState(next);
-          localStorage.setItem(LS_KEY, JSON.stringify(next));
-        });
+        if (remote) apply(remote);
+        unsub = onKeysSnapshot(user.uid, apply);
+      })
+      .catch(() => {
+        // Fall back to local keys if Firestore is unreachable.
       })
       .finally(() => setSyncing(false));
 

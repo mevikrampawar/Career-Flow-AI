@@ -77,6 +77,4 @@ export const useAppStore = create<AppState>()(
   ),
 );
 
-export function getResume(): ResumeData | null {
-  return useAppStore.getState().resume;
-}
+

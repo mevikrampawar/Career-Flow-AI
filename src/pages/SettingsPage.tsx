@@ -6,6 +6,7 @@ import { testApifyConnection } from "../lib/apify";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Field, Input } from "../components/ui/Input";
+import { Icon } from "../components/ui/Icon";
 import { useToast } from "../components/ui/Toast";
 
 function KeyField({
@@ -33,7 +34,7 @@ function KeyField({
 }) {
   const [show, setShow] = useState(false);
   return (
-    <div className="rounded-sm border border-outline-variant/70 p-4">
+    <div className="rounded-lg border border-outline-variant/70 p-4">
       <Field label={label} hint={hint}>
         <div className="flex gap-2">
           <Input
@@ -46,6 +47,7 @@ function KeyField({
             spellCheck={false}
           />
           <Button variant="ghost" size="md" onClick={() => setShow((s) => !s)}>
+            <Icon name={show ? "visibility_off" : "visibility"} size={18} />
             {show ? "Hide" : "Show"}
           </Button>
         </div>
@@ -57,7 +59,12 @@ function KeyField({
         <Button size="sm" variant="secondary" onClick={onTest} loading={testing} disabled={!value.trim()}>
           {testLabel}
         </Button>
-        {saved && <span className="text-label-sm text-success">Saved ✓</span>}
+        {saved && (
+          <span className="inline-flex items-center gap-1 font-label-sm text-label-sm text-success">
+            <Icon name="check_circle" size={16} filled />
+            Saved
+          </span>
+        )}
       </div>
     </div>
   );
@@ -107,16 +114,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-headline-lg text-on-surface">Settings</h1>
-        <p className="mt-1 text-body-sm text-on-surface-variant">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <header>
+        <h1 className="font-headline-lg text-headline-lg text-on-surface">Settings</h1>
+        <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
           Bring your own keys — all AI and scraping calls run from your browser.
         </p>
-      </div>
+      </header>
 
       {syncing && (
-        <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
+        <div className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
           <Spinner className="size-4" /> Syncing keys with Firestore…
         </div>
       )}
@@ -133,14 +140,14 @@ export default function SettingsPage() {
                 Sign out
               </Button>
             ) : null}
-            <p className="text-body-sm text-on-surface-variant">
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
               Keys are synced to your private Firestore document when signed in.
             </p>
           </div>
         </Card>
       ) : (
-        <Card className="p-5">
-          <p className="text-body-sm text-on-surface-variant">
+        <Card className="p-6">
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
             Firebase isn't configured yet — keys stay on this device in
             localStorage. Add <code className="font-mono">VITE_FIREBASE_*</code>{" "}
             env vars to enable Google sign-in and cloud sync.
@@ -181,10 +188,10 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card className="p-5">
-        <h3 className="text-headline-md text-on-surface">Danger zone</h3>
+      <Card className="p-6">
+        <h3 className="font-headline-md text-headline-md text-on-surface">Danger zone</h3>
         <div className="mt-3 flex items-center justify-between gap-4">
-          <p className="text-body-sm text-on-surface-variant">
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
             Remove all locally stored keys.
           </p>
           <Button

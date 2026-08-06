@@ -8,6 +8,8 @@ import type { AnalysisStatus, ResumeData } from "../lib/types";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Chip, Badge } from "../components/ui/Badge";
+import { Field, Input, Textarea } from "../components/ui/Input";
+import { Icon } from "../components/ui/Icon";
 import { useToast } from "../components/ui/Toast";
 
 export default function ResumePage() {
@@ -64,19 +66,21 @@ export default function ResumePage() {
   const busy = status === "parsing" || status === "analyzing";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-headline-lg text-on-surface">Resume</h1>
-        <p className="mt-1 text-body-sm text-on-surface-variant">
+    <div className="mx-auto flex max-w-2xl flex-col gap-8">
+      <header>
+        <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-lg md:text-headline-lg">
+          Resume
+        </h1>
+        <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
           Upload a PDF. We extract your profile and analyze it with Groq.
         </p>
-      </div>
+      </header>
 
       <div
-        className={`grid place-items-center rounded-lg border-2 border-dashed px-6 py-14 text-center transition-colors ${
+        className={`group relative flex flex-col items-center justify-center gap-6 overflow-hidden rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
           dragOver
-            ? "border-primary-container bg-primary-container/8"
-            : "border-outline-variant bg-surface-container-lowest"
+            ? "border-primary bg-surface-container-lowest"
+            : "border-outline-variant bg-surface-container-lowest hover:border-primary"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -91,26 +95,26 @@ export default function ResumePage() {
         }}
       >
         {busy ? (
-          <div className="space-y-3">
-            <Spinner className="mx-auto size-8 text-primary-container" />
-            <p className="text-body-md text-on-surface">{progress}</p>
+          <div className="flex flex-col items-center gap-4">
+            <Spinner className="size-8 text-primary" />
+            <p className="font-body-md text-body-md text-on-surface">{progress}</p>
           </div>
         ) : (
           <>
-            <div className="grid size-12 place-items-center rounded-sm bg-primary-container/12 text-2xl text-primary">
-              ▤
+            <div className="flex size-20 items-center justify-center rounded-full bg-surface-container-low transition-transform duration-300 group-hover:scale-110">
+              <Icon name="cloud_upload" size={40} className="text-primary" />
             </div>
-            <p className="mt-4 text-body-lg text-on-surface">
-              Drop your resume here
-            </p>
-            <p className="mt-1 text-body-sm text-on-surface-variant">
-              PDF only · parsed locally in your browser
-            </p>
-            <Button
-              className="mt-5"
-              onClick={() => inputRef.current?.click()}
-            >
-              Choose file
+            <div className="flex flex-col gap-2">
+              <span className="font-headline-md text-headline-md text-on-surface">
+                Drag & drop your resume
+              </span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                PDF only · parsed locally in your browser
+              </span>
+            </div>
+            <Button className="mt-2" onClick={() => inputRef.current?.click()}>
+              <Icon name="upload_file" size={18} />
+              Browse Files
             </Button>
           </>
         )}
@@ -137,9 +141,10 @@ export default function ResumePage() {
       )}
 
       {!hasGroq && (
-        <p className="rounded-sm border border-warning/40 bg-warning-container px-3 py-2 text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+          <Icon name="key" size={18} />
           You need a Groq API key (free) to analyze your resume.{" "}
-          <button className="underline" onClick={() => navigate("/app/settings")}>
+          <button className="font-semibold underline" onClick={() => navigate("/app/settings")}>
             Add it in Settings
           </button>
         </p>
@@ -149,69 +154,210 @@ export default function ResumePage() {
 }
 
 function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: () => void }) {
+  const updateResume = useAppStore((s) => s.updateResume);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    fullName: resume.fullName ?? "",
+    headline: resume.headline ?? "",
+    location: resume.location ?? "",
+    email: resume.email ?? "",
+    phone: resume.phone ?? "",
+    linkedin: resume.linkedin ?? "",
+    summary: resume.summary ?? "",
+    skills: [...resume.skills],
+  });
+  const [newSkill, setNewSkill] = useState("");
+
+  function startEdit() {
+    setDraft({
+      fullName: resume.fullName ?? "",
+      headline: resume.headline ?? "",
+      location: resume.location ?? "",
+      email: resume.email ?? "",
+      phone: resume.phone ?? "",
+      linkedin: resume.linkedin ?? "",
+      summary: resume.summary ?? "",
+      skills: [...resume.skills],
+    });
+    setEditing(true);
+  }
+
+  function save() {
+    const skills = draft.skills.map((s) => s.trim()).filter(Boolean);
+    updateResume({
+      fullName: draft.fullName.trim() || undefined,
+      headline: draft.headline.trim() || undefined,
+      location: draft.location.trim() || undefined,
+      email: draft.email.trim() || undefined,
+      phone: draft.phone.trim() || undefined,
+      linkedin: draft.linkedin.trim() || undefined,
+      summary: draft.summary.trim(),
+      skills: [...new Set(skills)],
+    });
+    setEditing(false);
+  }
+
+  function addSkill() {
+    const skill = newSkill.trim();
+    if (!skill || draft.skills.some((s) => s.toLowerCase() === skill.toLowerCase())) return;
+    setDraft((d) => ({ ...d, skills: [...d.skills, skill] }));
+    setNewSkill("");
+  }
+
+  function set<K extends keyof typeof draft>(key: K, value: (typeof draft)[K]) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-headline-lg text-on-surface">Your profile</h1>
-          <p className="mt-1 text-body-sm text-on-surface-variant">
+          <h1 className="font-headline-lg text-headline-lg text-on-surface">Your profile</h1>
+          <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
             {resume.fileName}
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={onReanalyze}>
-          Re-upload
-        </Button>
+        <div className="flex items-center gap-2">
+          {!editing && (
+            <Button variant="secondary" size="sm" onClick={startEdit}>
+              <Icon name="edit" size={16} />
+              Edit
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onReanalyze}>
+            Re-upload
+          </Button>
+        </div>
       </div>
 
-      <Card className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-headline-lg text-on-surface">
-              {resume.fullName ?? "Untitled"}
-            </h2>
-            <p className="mt-0.5 text-body-md text-on-surface-variant">
-              {[resume.headline, resume.location].filter(Boolean).join(" · ") || "—"}
-            </p>
-            <p className="mt-1 text-body-sm text-on-surface-variant">
-              {[resume.email, resume.phone, resume.linkedin].filter(Boolean).join(" · ") || ""}
-            </p>
+      <Card className="p-6">
+        {editing ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Full name">
+                <Input value={draft.fullName} onChange={(e) => set("fullName", e.target.value)} />
+              </Field>
+              <Field label="Headline">
+                <Input value={draft.headline} onChange={(e) => set("headline", e.target.value)} />
+              </Field>
+              <Field label="Location">
+                <Input value={draft.location} onChange={(e) => set("location", e.target.value)} />
+              </Field>
+              <Field label="Email">
+                <Input value={draft.email} onChange={(e) => set("email", e.target.value)} />
+              </Field>
+              <Field label="Phone">
+                <Input value={draft.phone} onChange={(e) => set("phone", e.target.value)} />
+              </Field>
+              <Field label="LinkedIn">
+                <Input value={draft.linkedin} onChange={(e) => set("linkedin", e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Summary">
+              <Textarea
+                value={draft.summary}
+                onChange={(e) => set("summary", e.target.value)}
+                className="min-h-28"
+              />
+            </Field>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={save}>
+                Save changes
+              </Button>
+            </div>
           </div>
-          <Badge tone="success" dot>
-            Ready
-          </Badge>
-        </div>
-        {resume.summary && (
-          <p className="mt-4 text-body-md text-on-surface">{resume.summary}</p>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-headline-lg text-headline-lg text-on-surface">
+                  {resume.fullName ?? "Untitled"}
+                </h2>
+                <p className="mt-0.5 font-body-md text-body-md text-on-surface-variant">
+                  {[resume.headline, resume.location].filter(Boolean).join(" · ") || "—"}
+                </p>
+                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                  {[resume.email, resume.phone, resume.linkedin].filter(Boolean).join(" · ") || ""}
+                </p>
+              </div>
+              <Badge tone="success" dot>
+                Ready
+              </Badge>
+            </div>
+            {resume.summary && (
+              <p className="mt-4 font-body-md text-body-md text-on-surface">{resume.summary}</p>
+            )}
+          </>
         )}
       </Card>
 
-      {resume.skills.length > 0 && (
-        <Card className="p-5">
-          <h3 className="text-headline-md text-on-surface">Skills</h3>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {resume.skills.map((s) => (
-              <Chip key={s}>{s}</Chip>
-            ))}
-          </div>
+      {resume.skills.length > 0 || editing ? (
+        <Card className="p-6">
+          <h3 className="font-headline-md text-headline-md text-on-surface">Skills</h3>
+          {editing ? (
+            <div className="mt-3">
+              <div className="flex flex-wrap gap-2">
+                {draft.skills.map((s) => (
+                  <Chip
+                    key={s}
+                    onRemove={() =>
+                      set(
+                        "skills",
+                        draft.skills.filter((x) => x !== s),
+                      )
+                    }
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Input
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addSkill();
+                    }
+                  }}
+                  placeholder="Add a skill…"
+                />
+                <Button variant="secondary" size="md" onClick={addSkill} disabled={!newSkill.trim()}>
+                  <Icon name="add" size={18} />
+                  Add
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {resume.skills.map((s) => (
+                <Chip key={s}>{s}</Chip>
+              ))}
+            </div>
+          )}
         </Card>
-      )}
+      ) : null}
 
       {resume.experience.length > 0 && (
-        <Card className="p-5">
-          <h3 className="text-headline-md text-on-surface">Experience</h3>
+        <Card className="p-6">
+          <h3 className="font-headline-md text-headline-md text-on-surface">Experience</h3>
           <div className="mt-4 space-y-5">
             {resume.experience.map((xp, i) => (
               <div key={i}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h4 className="text-body-lg font-semibold text-on-surface">
+                  <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
                     {xp.title}
                   </h4>
-                  <span className="text-body-sm text-on-surface-variant">
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">
                     {[xp.startDate, xp.endDate ?? (xp.current ? "Present" : undefined)].filter(Boolean).join(" – ")}
                   </span>
                 </div>
-                <p className="text-body-md font-medium text-primary">{xp.company}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-body-sm text-on-surface-variant">
+                <p className="font-body-md text-body-md font-medium text-primary">{xp.company}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface-variant">
                   {xp.bullets.map((b, j) => (
                     <li key={j}>{b}</li>
                   ))}
@@ -230,13 +376,13 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
       )}
 
       {resume.education.length > 0 && (
-        <Card className="p-5">
-          <h3 className="text-headline-md text-on-surface">Education</h3>
+        <Card className="p-6">
+          <h3 className="font-headline-md text-headline-md text-on-surface">Education</h3>
           <div className="mt-4 space-y-4">
             {resume.education.map((ed, i) => (
               <div key={i}>
-                <h4 className="text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
-                <p className="text-body-sm text-on-surface-variant">
+                <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
                   {ed.institution}
                   {ed.endDate ? ` · ${ed.endDate}` : ""}
                 </p>

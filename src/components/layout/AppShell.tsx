@@ -3,19 +3,27 @@ import { useAuth } from "../../lib/auth";
 import { useKeys } from "../../lib/keys";
 import { useAppStore } from "../../store/useAppStore";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 
 const NAV = [
-  { to: "/app", label: "Dashboard", icon: "◧", end: true },
-  { to: "/app/resume", label: "Resume", icon: "▤" },
-  { to: "/app/jobs", label: "Jobs", icon: "⌕" },
-  { to: "/app/applications", label: "Applications", icon: "✓" },
-  { to: "/app/settings", label: "Settings", icon: "⚙" },
+  { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
+  { to: "/app/applications", label: "Applications", icon: "work_history" },
+  { to: "/app/jobs", label: "Job Matcher", icon: "auto_awesome" },
+  { to: "/app/resume", label: "Resume", icon: "description" },
+  { to: "/app/settings", label: "Settings", icon: "settings" },
+];
+
+const MOBILE_NAV = [
+  { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
+  { to: "/app/jobs", label: "Matcher", icon: "auto_awesome" },
+  { to: "/app/applications", label: "Apps", icon: "work_history" },
+  { to: "/app/settings", label: "Settings", icon: "settings" },
 ];
 
 function Avatar({ name, email }: { name?: string; email?: string }) {
   const letter = (name ?? email ?? "?").charAt(0).toUpperCase();
   return (
-    <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-container text-label-md font-semibold text-on-primary">
+    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-variant text-label-md font-semibold text-primary">
       {letter}
     </div>
   );
@@ -30,74 +38,73 @@ export default function AppShell() {
   const setupComplete = hasGroq && hasApify && resume;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-outline-variant/60 bg-surface-container-lowest">
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="grid size-8 place-items-center rounded-sm bg-primary-container text-sm font-semibold text-on-primary">
-            CF
-          </div>
-          <div>
-            <div className="text-label-md font-semibold text-on-surface">
-              Career Flow
-            </div>
-            <div className="text-label-sm text-on-surface-variant">AI</div>
-          </div>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-surface-container-low md:flex">
+        <div className="px-6 pb-6 pt-8">
+          <NavLink to="/app" className="flex items-center gap-2">
+            <span className="grid size-9 place-items-center rounded-lg bg-primary-container text-on-primary-container">
+              <Icon name="work" size={20} filled />
+            </span>
+            <span className="font-display text-headline-md font-bold tracking-tight text-primary">
+              CareerFlow AI
+            </span>
+          </NavLink>
         </div>
 
-        <nav className="mt-2 flex-1 space-y-1 px-3">
+        <nav className="flex-1 space-y-1 px-4">
           {NAV.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-sm px-3 py-2.5 text-body-sm transition-colors ${
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md transition-colors ${
                   isActive
-                    ? "bg-primary-container/12 font-medium text-primary"
-                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                    ? "bg-surface-container-high font-semibold text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-primary"
                 }`
               }
             >
-              <span className="w-4 text-center" aria-hidden>
-                {item.icon}
-              </span>
+              <Icon name={item.icon} size={20} filled />
               {item.label}
             </NavLink>
           ))}
-
-          {!setupComplete && (
-            <div className="mt-4 mx-1 rounded-sm border border-outline-variant/70 bg-surface-container-low px-3 py-2.5 text-body-sm text-on-surface-variant">
-              {!resume && <p className="mb-1.5">1. Upload your resume</p>}
-              {!hasGroq && <p className="mb-1.5">2. Add your Groq key</p>}
-              {!hasApify && <p className="mb-1.5">3. Add your Apify token</p>}
-              {setupComplete && <p className="text-success">All set 🎉</p>}
-            </div>
-          )}
         </nav>
 
-        <div className="border-t border-outline-variant/60 p-3">
-          {user ? (
-            <div className="flex items-center gap-2.5 px-1.5 py-1">
-              <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-body-sm font-medium text-on-surface">
-                  {user.displayName ?? "Signed in"}
-                </div>
-                <div className="truncate text-label-sm text-on-surface-variant">
-                  {user.email}
-                </div>
+        <div className="mt-auto space-y-4 px-4 py-6">
+          {!setupComplete && (
+            <div className="rounded-lg border border-border-variant bg-surface-container-lowest p-3 text-body-sm text-on-surface-variant">
+              <div className="mb-1.5 flex items-center gap-1.5 font-medium text-on-surface">
+                <Icon name="flag" size={16} filled /> Set up
               </div>
-              <button
-                onClick={() => signOut()}
-                className="text-label-sm text-on-surface-variant hover:text-error"
-                title="Sign out"
-              >
-                ⎋
-              </button>
+              {!resume && <p className="py-0.5">1. Upload your resume</p>}
+              {!hasGroq && <p className="py-0.5">2. Add your Groq key</p>}
+              {!hasApify && <p className="py-0.5">3. Add your Apify token</p>}
             </div>
-          ) : (
-            <div className="px-1.5">
+          )}
+
+          <div className="border-t border-border-variant pt-4">
+            {user ? (
+              <div className="flex items-center gap-3 px-1 py-1">
+                <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-label-md font-semibold text-on-surface">
+                    {user.displayName ?? "Signed in"}
+                  </div>
+                  <div className="truncate text-label-sm text-on-surface-variant">
+                    {user.email}
+                  </div>
+                </div>
+                <button
+                  onClick={() => signOut()}
+                  className="grid size-8 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-error"
+                  title="Sign out"
+                >
+                  <Icon name="logout" size={18} />
+                </button>
+              </div>
+            ) : (
               <Button
                 size="sm"
                 variant="secondary"
@@ -106,17 +113,55 @@ export default function AppShell() {
               >
                 Sign in
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </aside>
 
+      {/* Mobile top bar */}
+      <header className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border-variant bg-surface-container-lowest px-margin-mobile md:hidden">
+        <NavLink to="/app" className="flex items-center gap-2">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary-container text-on-primary-container">
+            <Icon name="work" size={18} filled />
+          </span>
+          <span className="font-display text-headline-sm font-bold text-primary">
+            CareerFlow AI
+          </span>
+        </NavLink>
+        <button
+          onClick={() => navigate("/app/settings")}
+          className="grid size-9 place-items-center rounded-full text-on-surface-variant"
+          aria-label="Settings"
+        >
+          <Icon name="settings" size={22} />
+        </button>
+      </header>
+
       {/* Main */}
-      <main className="ml-60 min-w-0 flex-1 px-6 py-6 lg:px-10">
-        <div className="mx-auto w-full max-w-(--container-app)">
+      <main className="min-w-0 flex-1 pb-24 pt-16 md:ml-64 md:pb-0 md:pt-0">
+        <div className="mx-auto w-full max-w-(--container-app) px-margin-mobile py-6 md:px-margin-desktop md:py-10">
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch border-t border-border-variant bg-surface-container-lowest md:hidden">
+        {MOBILE_NAV.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `flex flex-1 flex-col items-center justify-center gap-1 text-label-sm ${
+                isActive ? "text-primary" : "text-on-surface-variant"
+              }`
+            }
+          >
+            <Icon name={item.icon} size={22} filled />
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

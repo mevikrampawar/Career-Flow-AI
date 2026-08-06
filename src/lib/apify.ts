@@ -89,10 +89,10 @@ export async function waitForRun(
     onProgress?.(status);
     if (status === "SUCCEEDED") return run?.data?.defaultDatasetId as string;
     if (status === "FAILED" || status === "ABORTED" || status === "TIMED_OUT") {
-      const err = run?.data?.defaultKeyValueStoreId
-        ? "Actor run did not succeed."
-        : "Actor run did not succeed.";
-      throw new ApifyError(`${err} (status: ${status})`);
+      const detail = run?.data?.statusMessage || run?.data?.exitInfo;
+      throw new ApifyError(
+        detail ? `Actor run ${status}: ${detail}` : `Actor run did not succeed (status: ${status}).`,
+      );
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
   }

@@ -4,11 +4,11 @@ type Tone = "neutral" | "primary" | "success" | "warning" | "error" | "info";
 
 const tones: Record<Tone, string> = {
   neutral: "bg-surface-container-high text-on-surface-variant",
-  primary: "bg-primary-container/12 text-primary",
+  primary: "bg-primary-fixed text-primary",
   success: "bg-success-container text-on-success-container",
   warning: "bg-warning-container text-warning",
   error: "bg-error-container text-on-error-container",
-  info: "bg-secondary-container text-on-secondary-container",
+  info: "bg-secondary-fixed text-secondary",
 };
 
 export function Badge({
@@ -40,7 +40,7 @@ export function Chip({
   onRemove?: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-sm bg-surface-container px-2.5 py-1 text-body-sm text-on-surface-variant">
+    <span className="inline-flex items-center gap-1 rounded-md bg-surface-container-high px-2.5 py-1 text-body-sm text-on-surface">
       {children}
       {onRemove && (
         <button

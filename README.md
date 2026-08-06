@@ -13,6 +13,8 @@ Automate your job hunt — entirely from the browser. Upload a resume, scrape li
 | AI match scoring | Every job is scored 0–100 against your resume with strengths, gaps, and ATS keyword suggestions |
 | Assisted apply | Tailored summary + achievement bullets + cover letter generated per role, then jump to the application |
 | Application tracking | Pipeline statuses: draft → applied → interview → offer / rejected |
+| Resume profile editing | Edit extracted profile (contact, summary, skills) directly, no re-upload needed |
+| Application notes | Per-application notes for interview prep, contacts, and follow-ups |
 | BYOK key vault | Groq + Apify keys saved to localStorage and synced to your own Firestore document when signed in |
 
 ## Tech stack (100% free & open source)
@@ -74,6 +76,7 @@ VITE_FIREBASE_PROJECT_ID
 VITE_FIREBASE_STORAGE_BUCKET
 VITE_FIREBASE_MESSAGING_SENDER_ID
 VITE_FIREBASE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID
 ```
 
 Then enable Pages (Settings → Pages → Source: **GitHub Actions**).
@@ -109,4 +112,4 @@ the shipped app stay visually consistent.
 - Scrape result schemas vary by Apify actor; normalizers in `src/lib/apify.ts`
   handle common fields.
 - Ideas: multi-resume profiles, apply-source analytics, application reminders,
-  public job-board aggregation.
+  public job-board aggregation, edit experience/education inline.

@@ -7,7 +7,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`rounded-lg border border-outline-variant/70 bg-surface-container-lowest ${className}`}
+      className={`rounded-xl border border-border-variant bg-surface-container-lowest ${className}`}
       {...rest}
     >
       {children}
@@ -27,9 +27,9 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={`flex items-start justify-between gap-4 p-5 pb-3 ${className}`}>
+    <div className={`flex items-start justify-between gap-4 p-6 pb-3 ${className}`}>
       <div>
-        <h3 className="text-headline-md text-on-surface">{title}</h3>
+        <h3 className="font-display text-headline-md text-on-surface">{title}</h3>
         {subtitle && (
           <p className="mt-1 text-body-sm text-on-surface-variant">{subtitle}</p>
         )}

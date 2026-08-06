@@ -1,3 +1,5 @@
+import { Icon } from "./ui/Icon";
+
 export function MatchScore({
   score,
   size = "md",
@@ -6,27 +8,27 @@ export function MatchScore({
   size?: "sm" | "md";
 }) {
   if (score === undefined) return null;
-  const tone =
-    score >= 75
-      ? "text-success"
-      : score >= 50
-        ? "text-warning"
-        : "text-on-surface-variant";
-  const ring = size === "md" ? "size-14 text-sm" : "size-10 text-xs";
+  const pill = size === "md" ? "px-2.5 py-1 text-label-sm" : "px-2 py-0.5 text-label-sm";
+
+  if (score >= 90) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 rounded-full bg-accent-lime/20 text-[#3c4200] ${pill}`}
+        title={`AI match: ${score}%`}
+      >
+        <Icon name="auto_awesome" size={14} />
+        {score}% Match
+      </span>
+    );
+  }
 
   return (
-    <div
-      className={`relative grid ${ring} shrink-0 place-items-center rounded-full border-2 ${tone} ${
-        score >= 75
-          ? "border-success/40"
-          : score >= 50
-            ? "border-warning/40"
-            : "border-outline-variant"
-      }`}
+    <span
+      className={`inline-flex items-center rounded-full bg-surface-container-high text-on-surface-variant ${pill}`}
       title={`AI match: ${score}%`}
     >
-      <span className="font-semibold">{score}%</span>
-    </div>
+      {score}% Match
+    </span>
   );
 }
 
