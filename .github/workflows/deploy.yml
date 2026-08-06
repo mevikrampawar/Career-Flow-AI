@@ -1,23 +1,24 @@
-name: Build and Publish to GitHub Pages (single branch)
+name: Deploy to GitHub Pages
 
-# Everything stays on `main`. The workflow builds the app and commits the
-# output to `docs/` on main; GitHub Pages serves the repo's main/docs folder
-# directly (legacy build). Pushes made by GITHUB_TOKEN do NOT re-trigger
-# workflows, so there is no loop.
+# GitHub Actions-based Pages deployment (configure-pages + upload-pages-artifact
+# + deploy-pages). The build output is uploaded as an artifact and published by
+# GitHub — nothing is committed to the repo. Only `main` is used.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build-and-commit:
+  build:
     runs-on: ubuntu-latest
     env:
       # Public Firebase web config, injected at build time.
@@ -29,26 +30,23 @@ jobs:
       VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - run: npm ci
       - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
-      - name: Commit built app to main
-        run: |
-          rm -rf docs
-          cp -r dist docs
-          touch docs/.nojekyll
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f docs
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "build: publish app to GitHub Pages [skip ci]"
-            git push origin main
-          fi
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
