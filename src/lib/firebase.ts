@@ -33,6 +33,9 @@ const FIREBASE_CONFIG = {
     | string
     | undefined,
   appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID as
+    | string
+    | undefined,
 };
 
 export const isFirebaseConfigured = Boolean(FIREBASE_CONFIG.apiKey);
