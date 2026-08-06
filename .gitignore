@@ -1,0 +1,23 @@
+# deps
+node_modules/
+
+# build
+dist/
+dist-ssr/
+*.local
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.key
+
+# opencode local config (contains MCP API keys) - keep out of repo
+opencode.json
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.tsbuildinfo

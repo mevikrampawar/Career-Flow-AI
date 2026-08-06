@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Every user owns a /users/{uid} document and all subcollections
+    // (settings/keys, resumes, jobs, applications). Only the authenticated
+    // owner may read or write their own data.
+    match /users/{userId}/{document=**} {
+      allow read, create, update, delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+  }
+}
