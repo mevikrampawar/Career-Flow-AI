@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useKeys } from "../../lib/keys";
@@ -46,8 +46,15 @@ export default function AppShell() {
   const { syncing, signedIn } = useSync();
   const { theme, toggleTheme } = useTheme();
   const resume = useAppStore((s) => s.resume);
+  const backfillEmails = useAppStore((s) => s.backfillEmails);
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+
+  // Auto-detect contact emails in any stored job descriptions that were scraped
+  // before email extraction existed (runs once per mount; sync re-runs it too).
+  useEffect(() => {
+    backfillEmails();
+  }, [backfillEmails]);
 
   // Every route inside /app requires a Google account so data syncs to
   // Firestore. No local-only mode.

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Application, CandidateProfile, JobPosting, JobSearchParams, ResumeData } from "../lib/types";
-import { buildEmailDraft, jobKey } from "../lib/format";
+import { buildEmailDraft, extractEmails, jobKey } from "../lib/format";
 
 /** An in-flight Apify scrape, persisted so a refresh/navigation can resume it. */
 export interface ActiveScrape {
@@ -67,6 +67,7 @@ export interface AppState {
   updateApplication: (id: string, patch: Partial<Application>) => void;
   removeApplication: (id: string) => void;
   addScrapedJobs: (jobs: JobPosting[]) => { added: number; duplicates: number };
+  backfillEmails: () => void;
   setLastSearchParams: (params: JobSearchParams) => void;
   setActiveScrape: (scrape: ActiveScrape | null) => void;
 }
@@ -248,11 +249,16 @@ export const useAppStore = create<AppState>()(
           }
         }
         const fresh: JobPosting[] = [];
+        // Emails extracted by THIS scrape that an already-archived copy of the
+        // job is still missing — propagated below so a re-scrape enriches it.
+        const enrich = new Map<string, string[]>();
         let duplicates = 0;
         for (const job of jobs) {
           const key = jobKey(job);
           if (seen.has(key)) {
             duplicates += 1;
+            const prior = byKey.get(key);
+            if (job.emails?.length && !prior?.emails?.length) enrich.set(key, job.emails);
             continue;
           }
           seen.add(key);
@@ -265,10 +271,62 @@ export const useAppStore = create<AppState>()(
             ...(prior?.emails?.length && !job.emails?.length ? { emails: prior.emails } : {}),
           });
         }
+        const patch: Partial<AppState> = {};
         if (fresh.length > 0) {
-          set({ scrapedJobs: [...fresh, ...s.scrapedJobs] });
+          patch.scrapedJobs = [...fresh, ...s.scrapedJobs];
         }
+        if (enrich.size > 0) {
+          const withEmails = (j: JobPosting): JobPosting => {
+            const emails = enrich.get(jobKey(j));
+            return emails ? { ...j, key: jobKey(j), emails } : j;
+          };
+          patch.scrapedJobs = (patch.scrapedJobs ?? s.scrapedJobs).map(withEmails);
+          patch.searchJobs = s.searchJobs.map(withEmails);
+          patch.savedJobs = s.savedJobs.map(withEmails);
+          patch.applications = s.applications.map((a) =>
+            a.emails?.length
+              ? a
+              : enrich.has(jobKey(a.job))
+                ? { ...a, emails: enrich.get(jobKey(a.job))!, emailDraft: rebuildDraft(a, enrich.get(jobKey(a.job))!, s.resume) }
+                : a,
+          );
+        }
+        if (Object.keys(patch).length > 0) set(patch);
         return { added: fresh.length, duplicates };
+      },
+
+      // Scan every stored job for contact emails its description still hasn't
+      // had captured, then attach them to every copy of the job (search/saved/
+      // scraped) and any linked application. Runs on app load and after cloud
+      // sync, so jobs scraped before email detection existed get auto-enriched.
+      backfillEmails: () => {
+        const s = get();
+        const found = new Map<string, string[]>();
+        for (const arr of [s.searchJobs, s.savedJobs, s.scrapedJobs]) {
+          for (const job of arr) {
+            if (job.emails?.length || !job.description) continue;
+            const emails = extractEmails(job.description);
+            if (emails?.length) found.set(jobKey(job), emails);
+          }
+        }
+        if (found.size === 0) return;
+        const withEmails = (j: JobPosting): JobPosting => {
+          if (j.emails?.length) return j;
+          const emails = found.get(jobKey(j));
+          return emails ? { ...j, key: jobKey(j), emails } : j;
+        };
+        set({
+          searchJobs: s.searchJobs.map(withEmails),
+          savedJobs: s.savedJobs.map(withEmails),
+          scrapedJobs: s.scrapedJobs.map(withEmails),
+          applications: s.applications.map((a) =>
+            a.emails?.length
+              ? a
+              : found.has(jobKey(a.job))
+                ? { ...a, emails: found.get(jobKey(a.job))!, emailDraft: rebuildDraft(a, found.get(jobKey(a.job))!, s.resume) }
+                : a,
+          ),
+        });
       },
     }),
     {

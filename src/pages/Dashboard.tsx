@@ -94,7 +94,7 @@ export default function Dashboard() {
       </header>
 
       {!setupComplete && !syncing && (
-        <section className="rounded-xl border border-variant bg-surface-container-lowest p-6">
+        <section className="rounded-xl border border-border-variant bg-surface-container-lowest p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-headline-md text-headline-md text-on-surface">
@@ -108,7 +108,7 @@ export default function Dashboard() {
               {pending.length} remaining
             </span>
           </div>
-          <div className="mt-4 divide-y divide-variant/60">
+          <div className="mt-4 divide-y divide-border-variant/60">
             {checks.map((c) => (
               <Link
                 key={c.label}
@@ -193,7 +193,7 @@ export default function Dashboard() {
           {emailActivity > 0 && (
             <Link
               to="/app/emails"
-              className="group flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-variant bg-surface-container-lowest p-6 transition-all hover:border-outline-variant hover:card-shadow"
+              className="group flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-border-variant bg-surface-container-lowest p-6 transition-all hover:border-outline-variant hover:card-shadow"
             >
               <div className="flex min-w-0 items-center gap-4">
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary-fixed text-on-secondary-fixed">
@@ -313,9 +313,9 @@ export default function Dashboard() {
                       <Link
                         key={app.id}
                         to={`/app/apply/${encodeURIComponent(jobKey(app.job))}`}
-                        className="flex items-center gap-4 rounded-xl border border-variant bg-surface-container-lowest p-4 transition-all hover:border-outline-variant hover:card-shadow"
+                        className="flex items-center gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-4 transition-all hover:border-outline-variant hover:card-shadow"
                       >
-                        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
                           {app.job.company.charAt(0).toUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -410,7 +410,7 @@ function Stat({
   return (
     <Link
       to={to}
-      className="group relative flex flex-col gap-4 overflow-hidden rounded-xl border border-variant bg-surface-container-lowest p-6 transition-all hover:-translate-y-1 hover:border-outline-variant hover:card-shadow"
+      className="group relative flex flex-col gap-4 overflow-hidden rounded-xl border border-border-variant bg-surface-container-lowest p-6 transition-all hover:-translate-y-1 hover:border-outline-variant hover:card-shadow"
     >
       <div className="flex items-start justify-between">
         <div>
@@ -471,7 +471,7 @@ function NextStepCard({
   return (
     <Link
       to={to}
-      className="group flex items-center gap-4 rounded-xl border border-variant bg-surface-container-lowest p-5 transition-all hover:border-outline-variant hover:card-shadow"
+      className="group flex items-center gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-5 transition-all hover:border-outline-variant hover:card-shadow"
     >
       <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${toneCls[tone]}`}>
         <Icon name={icon} size={22} />

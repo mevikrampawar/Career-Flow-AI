@@ -185,7 +185,7 @@ export default function ScrapedJobsPage() {
             Remote only
           </label>
           <div className="ml-auto flex items-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full border border-variant bg-surface-container-lowest px-3 py-1.5 font-label-md text-label-md text-on-surface">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border-variant bg-surface-container-lowest px-3 py-1.5 font-label-md text-label-md text-on-surface">
               <Icon name="inventory_2" size={16} className="text-primary" />
               {filtered.length} / {scrapedJobs.length}
             </span>

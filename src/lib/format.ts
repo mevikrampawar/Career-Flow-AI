@@ -118,6 +118,46 @@ export function parseEmailList(input: string): string[] {
   return out;
 }
 
+// Matches email-like strings and filters out obvious placeholder / junk values.
+const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const BAD_EMAIL = /example|sample|yourname|youremail|test|@2x|sentry|@png|@jpg|@webp|@svg|email\.com/i;
+
+function textOf(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.filter((x) => typeof x === "string").join(" ");
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    for (const k of ["text", "value", "name", "title", "fullLocation"]) {
+      if (typeof obj[k] === "string" && obj[k].trim()) return obj[k].trim();
+    }
+  }
+  return "";
+}
+
+/**
+ * Find contact email addresses inside free text (job descriptions, explicit
+ * actor fields, etc.), dropping placeholders and junk. Returns up to 5 unique
+ * addresses, or undefined when none are found.
+ */
+export function extractEmails(...texts: unknown[]): string[] | undefined {
+  const combined = texts
+    .map(textOf)
+    .join(" ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;|&lt;|&gt;|&quot;|&#39;/g, " ");
+  const found = combined.match(EMAIL_RE);
+  if (!found) return undefined;
+  const set = new Set<string>();
+  for (const m of found) {
+    const email = m.toLowerCase();
+    if (BAD_EMAIL.test(email)) continue;
+    if (email.length > 60) continue;
+    set.add(email);
+  }
+  return set.size ? [...set].slice(0, 5) : undefined;
+}
+
 /** Build a prefilled mailto link for reaching a job poster with one click. */
 export function mailtoHref(
   emails: string[],

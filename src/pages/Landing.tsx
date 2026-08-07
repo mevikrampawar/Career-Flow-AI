@@ -29,7 +29,7 @@ function GoogleIcon() {
 export default function Landing() {
   return (
     <div className="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased">
-      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-variant bg-surface px-margin-desktop">
+      <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-border-variant bg-surface px-margin-desktop">
         <Link to="/" className="flex items-center gap-2.5">
           <BrandLogo className="h-8 w-auto" />
         </Link>
@@ -54,7 +54,7 @@ export default function Landing() {
 
         <div className="relative z-10 mx-auto max-w-(--container-app) px-gutter">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-variant bg-surface-container-low px-3 py-1">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface-container-low px-3 py-1">
               <Icon name="auto_awesome" size={16} filled className="text-primary" />
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
                 Powered by Groq AI
@@ -96,7 +96,7 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-12">
-            <div className="group relative overflow-hidden rounded-xl border border-variant bg-surface p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-8">
+            <div className="group relative overflow-hidden rounded-xl border border-border-variant bg-surface p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-8">
               <div className="absolute right-0 top-0 p-6 opacity-10 transition-opacity duration-300 group-hover:opacity-20">
                 <Icon name="document_scanner" size={80} filled className="text-primary" />
               </div>
@@ -114,7 +114,7 @@ export default function Landing() {
                     high-impact keywords.
                   </p>
                 </div>
-                <div className="mt-8 border-t border-variant/50 pt-6">
+                <div className="mt-8 border-t border-border-variant/50 pt-6">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-label-sm text-label-sm text-on-surface-variant">
                       Processing Speed
@@ -130,7 +130,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="flex flex-col rounded-xl border border-variant bg-surface p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-4">
+            <div className="flex flex-col rounded-xl border border-border-variant bg-surface p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-4">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-fixed">
                 <Icon name="auto_awesome" className="text-on-secondary-fixed" />
               </div>
@@ -147,9 +147,9 @@ export default function Landing() {
               </Link>
             </div>
 
-            <div className="flex flex-col items-center gap-12 rounded-xl border border-variant bg-surface-container-low p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-12 md:flex-row">
+            <div className="flex flex-col items-center gap-12 rounded-xl border border-border-variant bg-surface-container-low p-8 transition-colors duration-300 hover:border-primary/30 md:col-span-12 md:flex-row">
               <div className="flex-1">
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-variant bg-surface px-3 py-1">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface px-3 py-1">
                   <span className="h-2 w-2 rounded-full bg-accent-lime" />
                   <span className="font-label-sm text-label-sm text-on-surface-variant">
                     Real-time Data
@@ -184,8 +184,8 @@ export default function Landing() {
                   </li>
                 </ul>
               </div>
-              <div className="w-full flex-1 rounded-lg border border-variant bg-surface p-6 shadow-sm">
-                <div className="mb-4 flex items-start justify-between border-b border-variant pb-4">
+              <div className="w-full flex-1 rounded-lg border border-border-variant bg-surface p-6 shadow-sm">
+                <div className="mb-4 flex items-start justify-between border-b border-border-variant pb-4">
                   <div>
                     <div className="font-label-md text-label-md text-on-surface">
                       Senior Frontend Engineer
@@ -217,7 +217,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-variant bg-surface py-12">
+      <footer className="border-t border-border-variant bg-surface py-12">
         <div className="mx-auto flex max-w-(--container-app) flex-col items-center justify-between gap-6 px-gutter md:flex-row">
           <div className="flex items-center gap-2.5">
             <BrandLogo className="h-7 w-auto" />

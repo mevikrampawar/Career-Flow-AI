@@ -201,7 +201,7 @@ export default function JobsPage() {
           </p>
         </div>
         {results.length > 0 && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-variant bg-surface-container-lowest px-4 py-2 font-label-md text-label-md text-on-surface">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface-container-lowest px-4 py-2 font-label-md text-label-md text-on-surface">
             {results.length} results
           </span>
         )}

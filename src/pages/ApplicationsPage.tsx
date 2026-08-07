@@ -134,7 +134,7 @@ export default function ApplicationsPage() {
                     }}
                     className="flex min-w-0 flex-1 items-center gap-4 text-left"
                   >
-                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
                       {app.job.company.charAt(0).toUpperCase()}
                     </span>
                     <span className="min-w-0">

@@ -1,5 +1,5 @@
 import type { JobPosting, JobSearchParams } from "./types";
-import { jobDedupeKey } from "./format";
+import { extractEmails, jobDedupeKey } from "./format";
 
 const APIFY_API = "https://api.apify.com/v2";
 const MAX_POLLS = 36;
@@ -262,31 +262,6 @@ function normalizeJob(
       undefined,
     emails,
   };
-}
-
-// Matches email-like strings and filters out obvious placeholder / junk values.
-const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
-const BAD_EMAIL = /example|sample|yourname|youremail|test|@2x|sentry|@png|@jpg|@webp|@svg|email\.com/i;
-
-function extractEmails(...texts: unknown[]): string[] | undefined {
-  const combined = texts
-    .map((t) => {
-      if (Array.isArray(t)) return t.filter((x) => typeof x === "string").join(" ");
-      return firstString(t) ?? "";
-    })
-    .join(" ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&amp;|&lt;|&gt;|&quot;|&#39;/g, " ");
-  const found = combined.match(EMAIL_RE);
-  if (!found) return undefined;
-  const set = new Set<string>();
-  for (const m of found) {
-    const email = m.toLowerCase();
-    if (BAD_EMAIL.test(email)) continue;
-    if (email.length > 60) continue;
-    set.add(email);
-  }
-  return set.size ? [...set].slice(0, 5) : undefined;
 }
 
 export async function searchJobs(

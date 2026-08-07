@@ -49,7 +49,7 @@ export default function SignIn() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-surface px-4 font-body-md text-body-md antialiased">
-      <div className="w-full max-w-md rounded-xl border border-variant bg-surface-container-lowest p-8 shadow-soft">
+      <div className="w-full max-w-md rounded-xl border border-border-variant bg-surface-container-lowest p-8 shadow-soft">
         <BrandLogo className="mx-auto h-12 w-auto" />
         <h1 className="mt-5 text-center font-headline-lg text-headline-lg text-on-surface">
           Welcome to Career Flow AI

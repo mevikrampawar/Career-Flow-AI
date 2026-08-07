@@ -117,6 +117,11 @@ function apply(kind: SyncKind, value: unknown) {
         s.setScrapedJobs(asArray(value) as JobPosting[]);
         break;
     }
+    // Newly synced jobs may predate email detection — enrich their descriptions
+    // so discovered emails surface everywhere (idempotent, skips once filled).
+    if (kind !== "resume" && kind !== "candidateProfile") {
+      useAppStore.getState().backfillEmails();
+    }
   } catch (e) {
     console.warn("Sync apply failed for", kind, e);
   }

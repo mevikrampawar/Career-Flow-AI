@@ -450,7 +450,7 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-variant/50 pt-4">
+            <div className="flex justify-end gap-2 border-t border-border-variant/50 pt-4">
               <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>
                 Cancel
               </Button>

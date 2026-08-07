@@ -152,9 +152,9 @@ export default function EmailsPage() {
                     navigate(`/app/apply/${encodeURIComponent(row.key)}`);
                   }
                 }}
-                className="group flex cursor-pointer flex-wrap items-center gap-4 rounded-xl border border-variant bg-surface-container-lowest p-4 transition-all hover:-translate-y-0.5 hover:border-outline-variant hover:card-shadow"
+                className="group flex cursor-pointer flex-wrap items-center gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-4 transition-all hover:-translate-y-0.5 hover:border-outline-variant hover:card-shadow"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
                   {row.company.charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export default function EmailsPage() {
                       row.emails.map((email) => (
                         <span
                           key={email}
-                          className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-variant/50 bg-surface px-2 py-0.5 font-body-sm text-body-sm text-primary"
+                          className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-border-variant/50 bg-surface px-2 py-0.5 font-body-sm text-body-sm text-primary"
                         >
                           <Icon name="mail" size={14} />
                           <span className="truncate">{email}</span>
@@ -223,7 +223,7 @@ function Stat({
     success: "bg-success-container text-on-success-container",
   };
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-variant bg-surface-container-lowest p-6">
+    <div className="flex flex-col gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">

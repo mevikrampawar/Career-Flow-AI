@@ -360,7 +360,7 @@ export default function ApplyPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-headline-md text-headline-md font-bold text-primary">
+            <span className="grid size-12 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-headline-md text-headline-md font-bold text-primary">
               {currentJob.company.charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
@@ -384,7 +384,7 @@ export default function ApplyPage() {
             </div>
           )}
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-variant/50 pt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-variant/50 pt-4">
           {existing && (
             <Badge tone={STATUS_TONE[existing.status]} dot>
               {STATUS_LABEL[existing.status]}
@@ -650,7 +650,7 @@ export default function ApplyPage() {
             </p>
           )}
 
-          <div className="border-t border-variant/50 pt-4">
+          <div className="border-t border-border-variant/50 pt-4">
             <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
               Contact email{emails.length === 1 ? "" : "s"}
             </p>
@@ -659,7 +659,7 @@ export default function ApplyPage() {
                 {emails.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1 rounded-md border border-variant/50 bg-surface pl-2.5 pr-1 py-1 font-body-sm text-body-sm text-on-surface"
+                    className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface pl-2.5 pr-1 py-1 font-body-sm text-body-sm text-on-surface"
                   >
                     <Icon name="mail" size={15} className="text-primary" />
                     {email}
@@ -718,7 +718,7 @@ export default function ApplyPage() {
             </p>
           </div>
 
-          <div className="border-t border-variant/50 pt-4">
+          <div className="border-t border-border-variant/50 pt-4">
             <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
               Send
             </p>
@@ -841,21 +841,6 @@ export default function ApplyPage() {
           </div>
         </Card>
       )}
-
-      <Card>
-        <CardHeader
-          title="Notes"
-          subtitle="Interview prep, contacts, follow-ups — anything for this application."
-        />
-        <div className="p-5 pt-2">
-          <Textarea
-            placeholder="Things to remember about this application…"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="min-h-28"
-          />
-        </div>
-      </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-body-sm text-body-sm text-on-surface-variant">

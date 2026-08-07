@@ -48,7 +48,7 @@ function JobMetaChips({ job }: { job: JobPosting }) {
       {chips.map((chip) => (
         <span
           key={chip.icon}
-          className="inline-flex items-center gap-1 rounded-md border border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-on-surface-variant"
+          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-on-surface-variant"
         >
           <Icon name={chip.icon} size={16} />
           {chip.label}
@@ -58,7 +58,7 @@ function JobMetaChips({ job }: { job: JobPosting }) {
         <a
           key={email}
           href={`mailto:${email}`}
-          className="inline-flex items-center gap-1 rounded-md border border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
+          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
           title={email}
         >
           <Icon name="mail" size={16} />
@@ -141,12 +141,12 @@ export function JobCard({
             setOpen(true);
           }
         }}
-        className="group relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-xl border border-variant bg-surface-container-lowest p-6 transition-all hover:-translate-y-1 hover:border-outline-variant hover:card-shadow focus-visible:ring-2 focus-visible:ring-primary"
+        className="group relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-xl border border-border-variant bg-surface-container-lowest p-6 transition-all hover:-translate-y-1 hover:border-outline-variant hover:card-shadow focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className="absolute -right-12 -top-12 h-24 w-24 rounded-bl-full bg-primary-fixed opacity-50 transition-transform group-hover:scale-110" />
 
         <div className="relative z-10 flex items-start justify-between gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-variant bg-surface-variant">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border-variant bg-surface-variant">
             <Icon name={BOARD_ICON[job.board] ?? "work"} className="text-primary" size={24} />
           </div>
           <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ export function JobCard({
           </div>
         )}
 
-        <div className="relative z-10 mt-auto border-t border-variant/50 pt-4">
+        <div className="relative z-10 mt-auto border-t border-border-variant/50 pt-4">
           <JobMetaChips job={job} />
         </div>
 
@@ -323,7 +323,7 @@ export function JobCard({
                   <a
                     key={email}
                     href={`mailto:${email}`}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-variant/50 bg-surface px-2.5 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border-variant/50 bg-surface px-2.5 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
                   >
                     <Icon name="mail" size={15} />
                     {email}
@@ -401,7 +401,7 @@ export function JobCard({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-variant/50 pt-4">
+          <div className="flex flex-wrap items-center gap-2 border-t border-border-variant/50 pt-4">
             {job.url && (
               <a href={job.url} target="_blank" rel="noreferrer">
                 <Button variant="secondary">
