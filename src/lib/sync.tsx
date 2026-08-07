@@ -117,9 +117,11 @@ function apply(kind: SyncKind, value: unknown) {
         s.setScrapedJobs(asArray(value) as JobPosting[]);
         break;
     }
-    // Newly synced jobs may predate email detection — enrich their descriptions
-    // so discovered emails surface everywhere (idempotent, skips once filled).
+    // Newly synced jobs may predate dedupe-by-key and email detection — collapse
+    // duplicate rows and enrich their descriptions so discovered emails surface
+    // everywhere (both idempotent; the cleaned rows push back to Firestore).
     if (kind !== "resume" && kind !== "candidateProfile") {
+      useAppStore.getState().dedupeJobs();
       useAppStore.getState().backfillEmails();
     }
   } catch (e) {

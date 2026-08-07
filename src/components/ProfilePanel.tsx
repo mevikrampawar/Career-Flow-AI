@@ -3,12 +3,14 @@ import { useAuth } from "../lib/auth";
 import { useKeys } from "../lib/keys";
 import { useGmail } from "../lib/GmailProvider";
 import { useSync } from "../lib/sync";
+import { wipeAccount } from "../lib/wipe";
 import { testGroqConnection } from "../lib/groq";
 import { testApifyConnection } from "../lib/apify";
 import { Button, Spinner } from "./ui/Button";
 import { Card, CardHeader } from "./ui/Card";
 import { Field, Input } from "./ui/Input";
 import { Icon } from "./ui/Icon";
+import { Modal } from "./ui/Modal";
 import { useToast } from "./ui/Toast";
 import { CandidateProfileCard } from "./CandidateProfileCard";
 
@@ -109,6 +111,9 @@ export function ProfilePanel() {
   const [testingGroq, setTestingGroq] = useState(false);
   const [testingApify, setTestingApify] = useState(false);
   const [gmailGuideOpen, setGmailGuideOpen] = useState(false);
+  const [dangerOpen, setDangerOpen] = useState(false);
+  const [dangerConfirm, setDangerConfirm] = useState("");
+  const [wiping, setWiping] = useState(false);
 
   useEffect(() => {
     setGroqDraft(keys.groqApiKey);
@@ -157,12 +162,41 @@ export function ProfilePanel() {
     }
   }
 
+  async function confirmWipe() {
+    if (!user) return;
+    setWiping(true);
+    try {
+      // Revoke the Gmail grant + clear the provider's in-memory state first.
+      try {
+        await gmail.disconnect();
+      } catch {
+        /* token already gone — keep going */
+      }
+      const result = await wipeAccount(user.uid);
+      setDangerOpen(false);
+      setDangerConfirm("");
+      if (result.accountDeleted) {
+        push("success", "All data and your account were deleted. See you next time!");
+      } else {
+        push(
+          "info",
+          "Data wiped. The Google account itself couldn't be deleted — sign in again and retry if you want it gone too.",
+        );
+      }
+    } catch (e) {
+      push("error", e instanceof Error ? e.message : "Could not wipe your data.");
+    } finally {
+      setWiping(false);
+    }
+  }
+
   const initial = (user?.displayName ?? user?.email ?? "?")
     .charAt(0)
     .toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
+      <div className="flex flex-col gap-6">
       <Card>
         <CardHeader
           title="Account"
@@ -389,6 +423,75 @@ export function ProfilePanel() {
           )}
         </div>
       </Card>
+
+      <Card>
+        <CardHeader
+          title="Danger zone"
+          subtitle="Erase everything and start over from scratch."
+        />
+        <div className="px-5 pb-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-error/40 bg-error-container/40 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-label-md text-label-md font-semibold text-on-surface">
+                Delete all data and this account
+              </p>
+              <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">
+                Removes your resume, jobs, applications, API keys, Gmail
+                connection, cloud data, and the Google account. This can't be
+                undone.
+              </p>
+            </div>
+            <Button variant="danger" size="sm" onClick={() => setDangerOpen(true)}>
+              <Icon name="delete_forever" size={16} />
+              Delete everything
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
+
+    <Modal
+      open={dangerOpen}
+      onClose={() => {
+        if (!wiping) setDangerOpen(false);
+      }}
+      title="Delete everything?"
+    >
+      <div className="space-y-4">
+        <p className="font-body-sm text-body-sm text-on-surface-variant">
+          This permanently deletes:
+        </p>
+        <ul className="list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface">
+          <li>Your resume, candidate profile, saved &amp; scraped jobs, and applications</li>
+          <li>Your API keys and Gmail connection</li>
+          <li>All cloud-synced data for your account</li>
+          <li>The Google account itself — you'll need to sign up again to use the app</li>
+        </ul>
+        <Field label="Type DELETE to confirm">
+          <Input
+            value={dangerConfirm}
+            onChange={(e) => setDangerConfirm(e.target.value)}
+            placeholder="DELETE"
+            className="font-mono"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </Field>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="secondary" onClick={() => setDangerOpen(false)} disabled={wiping}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={wiping}
+            disabled={dangerConfirm.trim() !== "DELETE"}
+            onClick={confirmWipe}
+          >
+            {wiping ? "Deleting…" : "Delete everything"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   );
 }

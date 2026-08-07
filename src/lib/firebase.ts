@@ -5,6 +5,7 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  deleteUser,
   type User,
 } from "firebase/auth";
 import {
@@ -13,6 +14,7 @@ import {
   setDoc,
   getDoc,
   onSnapshot,
+  deleteDoc,
   type Firestore,
 } from "firebase/firestore";
 
@@ -63,7 +65,14 @@ export function getDb(): Firestore {
   return _db;
 }
 
-export { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged };
+export {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  deleteUser,
+};
+export { deleteDoc };
 export type { User };
 
 export function getFirebaseAuth() {

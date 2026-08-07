@@ -68,6 +68,7 @@ export interface AppState {
   removeApplication: (id: string) => void;
   addScrapedJobs: (jobs: JobPosting[]) => { added: number; duplicates: number };
   backfillEmails: () => void;
+  dedupeJobs: () => void;
   setLastSearchParams: (params: JobSearchParams) => void;
   setActiveScrape: (scrape: ActiveScrape | null) => void;
 }
@@ -331,6 +332,45 @@ export const useAppStore = create<AppState>()(
           ),
         });
       },
+
+      // Collapse duplicate copies of the same job (same canonical key) inside
+      // each list, keeping the first copy and merging emails + match from the
+      // duplicates so no enrichment is lost. Runs on load and after cloud sync
+      // so jobs persisted BEFORE dedupe-by-key existed (e.g. tracking-URL
+      // variants stored as separate rows) stop inflating the matcher/archive.
+      dedupeJobs: () => {
+        const s = get();
+        const searchJobs = dedupeList(s.searchJobs);
+        const savedJobs = dedupeList(s.savedJobs);
+        const scrapedJobs = dedupeList(s.scrapedJobs);
+        const changed =
+          searchJobs.length !== s.searchJobs.length ||
+          savedJobs.length !== s.savedJobs.length ||
+          scrapedJobs.length !== s.scrapedJobs.length;
+        if (!changed) return;
+        // Emails that only survived on one copy of a job flow onto its linked
+        // application (and its draft) so the recipient list stays complete.
+        const emailsByKey = new Map<string, string[]>();
+        for (const arr of [searchJobs, savedJobs, scrapedJobs]) {
+          for (const j of arr) {
+            if (!j.emails?.length) continue;
+            const k = jobKey(j);
+            const prev = emailsByKey.get(k);
+            emailsByKey.set(
+              k,
+              prev ? [...new Set([...prev, ...j.emails])] : j.emails,
+            );
+          }
+        }
+        const applications = s.applications.map((a) => {
+          if (a.emails?.length) return a;
+          const emails = emailsByKey.get(jobKey(a.job));
+          return emails?.length
+            ? { ...a, emails, emailDraft: rebuildDraft(a, emails, s.resume) }
+            : a;
+        });
+        set({ searchJobs, savedJobs, scrapedJobs, applications });
+      },
     }),
     {
       name: "career-flow:app",
@@ -424,6 +464,37 @@ function applyEmails(s: AppState, key: string, emails: string[]): Partial<AppSta
     scrapedJobs: s.scrapedJobs.map(withEmail),
     applications,
   };
+}
+
+/**
+ * Remove duplicate copies of the same job (same canonical key) from a single
+ * list. The first copy is kept; emails and the AI match from later copies are
+ * merged onto it so collapsing rows never drops enrichment.
+ */
+function dedupeList(jobs: JobPosting[]): JobPosting[] {
+  const byKey = new Map<string, JobPosting>();
+  const order: string[] = [];
+  for (const job of jobs) {
+    const key = jobKey(job);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, job);
+      order.push(key);
+      continue;
+    }
+    const emails =
+      existing.emails?.length || job.emails?.length
+        ? [...new Set([...(existing.emails ?? []), ...(job.emails ?? [])])]
+        : undefined;
+    const match = existing.match ?? job.match;
+    const matchScore = existing.matchScore ?? job.matchScore ?? match?.score;
+    byKey.set(key, {
+      ...existing,
+      ...(emails?.length ? { emails } : {}),
+      ...(match ? { match, matchScore } : {}),
+    });
+  }
+  return order.map((k) => byKey.get(k)!);
 }
 
 

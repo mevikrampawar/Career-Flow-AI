@@ -47,14 +47,18 @@ export default function AppShell() {
   const { theme, toggleTheme } = useTheme();
   const resume = useAppStore((s) => s.resume);
   const backfillEmails = useAppStore((s) => s.backfillEmails);
+  const dedupeJobs = useAppStore((s) => s.dedupeJobs);
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Auto-detect contact emails in any stored job descriptions that were scraped
-  // before email extraction existed (runs once per mount; sync re-runs it too).
+  // Runs once per mount: collapse duplicate job rows that were stored before
+  // dedupe-by-key existed, then auto-detect contact emails in any stored job
+  // descriptions that were scraped before email extraction existed (sync
+  // re-runs both too).
   useEffect(() => {
+    dedupeJobs();
     backfillEmails();
-  }, [backfillEmails]);
+  }, [dedupeJobs, backfillEmails]);
 
   // Every route inside /app requires a Google account so data syncs to
   // Firestore. No local-only mode.
