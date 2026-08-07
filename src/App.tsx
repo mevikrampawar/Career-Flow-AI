@@ -23,27 +23,27 @@ export default function App() {
       <AuthProvider>
         <KeysProvider>
           <GmailProvider>
-          <ThemeProvider>
-            <SyncProvider>
-            <BrowserRouter basename="/Career-Flow-AI">
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/app" element={<AppShell />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="resume" element={<ResumePage />} />
-                  <Route path="jobs" element={<JobsPage />} />
-                  <Route path="saved" element={<SavedJobsPage />} />
-                  <Route path="scraped" element={<ScrapedJobsPage />} />
-                  <Route path="apply/:jobId" element={<ApplyPage />} />
-                  <Route path="applications" element={<ApplicationsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
-          </SyncProvider>
-          </ThemeProvider>
+            <ThemeProvider>
+              <SyncProvider>
+                <BrowserRouter basename="/Career-Flow-AI">
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/app" element={<AppShell />}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="resume" element={<ResumePage />} />
+                      <Route path="jobs" element={<JobsPage />} />
+                      <Route path="saved" element={<SavedJobsPage />} />
+                      <Route path="scraped" element={<ScrapedJobsPage />} />
+                      <Route path="apply/:jobId" element={<ApplyPage />} />
+                      <Route path="applications" element={<ApplicationsPage />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                    </Route>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </BrowserRouter>
+              </SyncProvider>
+            </ThemeProvider>
           </GmailProvider>
         </KeysProvider>
       </AuthProvider>

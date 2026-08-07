@@ -2,7 +2,7 @@
 
 Automate your job hunt — entirely from the browser. Upload a resume, scrape live openings, AI-score matches, and generate tailored application materials.
 
-**Client-side by design.** No backend servers. All AI and scraping calls run from your browser with **your own API keys (BYOK)**. Your data stays in your browser's localStorage and — when signed in with Google — in **your own Firestore** project.
+**Client-side by design.** No backend servers. All AI and scraping calls run from your browser with **your own API keys (BYOK)**. Sign in with **Google** — required — and your data (keys, resume, applications) syncs to **your own Firestore** project.
 
 ## Features
 
@@ -23,7 +23,7 @@ Automate your job hunt — entirely from the browser. Upload a resume, scrape li
 - **Tailwind CSS v4** — design system implemented from Google Stitch's *Kinetic Professional* tokens
 - **Groq** — resume analysis, job matching, cover letters (`llama-3.3-70b-versatile`)
 - **Apify** — job board scraping
-- **Firebase Auth (Google)** + **Firestore** — optional cloud sync of keys/profile
+- **Firebase Auth (Google)** + **Firestore** — required sign-in and cloud sync of keys/profile
 - **GitHub Actions** — auto-deploy to GitHub Pages on every push to `main`
 
 ## Get started

@@ -100,9 +100,11 @@ export function KeysProvider({ children }: { children: ReactNode }) {
     setKeysState({ ...EMPTY });
     localStorage.removeItem(LS_KEY);
     if (user && isFirebaseConfigured) {
-      saveKeysToFirestore(user.uid, { groqApiKey: "", apifyApiToken: "" }).catch(
-        () => {},
-      );
+      saveKeysToFirestore(user.uid, {
+        groqApiKey: "",
+        apifyApiToken: "",
+        gmailClientId: "",
+      }).catch(() => {});
     }
   }, [user]);
 

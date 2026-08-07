@@ -1,10 +1,10 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useKeys } from "../../lib/keys";
 import { useSync } from "../../lib/sync";
 import { useTheme } from "../../lib/theme";
 import { useAppStore } from "../../store/useAppStore";
-import { Button, Spinner } from "../ui/Button";
+import { Spinner } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 
 const NAV = [
@@ -36,12 +36,28 @@ function Avatar({ name, email }: { name?: string; email?: string }) {
 }
 
 export default function AppShell() {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { hasGroq, hasApify } = useKeys();
   const { syncing, signedIn } = useSync();
   const { theme, toggleTheme } = useTheme();
   const resume = useAppStore((s) => s.resume);
   const navigate = useNavigate();
+
+  // Every route inside /app requires a Google account so data syncs to
+  // Firestore. No local-only mode.
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <div className="flex flex-col items-center gap-3 font-body-sm text-body-sm text-on-surface-variant">
+          <Spinner className="size-6 text-primary" />
+          Loading your account…
+        </div>
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
 
   const setupComplete = hasGroq && hasApify && resume;
 
@@ -115,35 +131,24 @@ export default function AppShell() {
                 )}
               </div>
             )}
-            {user ? (
-              <div className="flex items-center gap-3 px-1 py-1">
-                <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-label-md font-semibold text-on-surface">
-                    {user.displayName ?? "Signed in"}
-                  </div>
-                  <div className="truncate text-label-sm text-on-surface-variant">
-                    {user.email}
-                  </div>
+            <div className="flex items-center gap-3 px-1 py-1">
+              <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-label-md font-semibold text-on-surface">
+                  {user.displayName ?? "Signed in"}
                 </div>
-                <button
-                  onClick={() => signOut()}
-                  className="grid size-8 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-error"
-                  title="Sign out"
-                >
-                  <Icon name="logout" size={18} />
-                </button>
+                <div className="truncate text-label-sm text-on-surface-variant">
+                  {user.email}
+                </div>
               </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full"
-                onClick={() => navigate("/signin")}
+              <button
+                onClick={() => signOut()}
+                className="grid size-8 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-error"
+                title="Sign out"
               >
-                Sign in
-              </Button>
-            )}
+                <Icon name="logout" size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

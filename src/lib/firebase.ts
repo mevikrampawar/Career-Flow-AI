@@ -17,9 +17,9 @@ import {
 } from "firebase/firestore";
 
 /**
- * Firebase is configured through Vite env vars. The app works without
- * Firebase (localStorage-only mode) — configure the vars below to enable
- * Google Sign-In and cross-device Firestore storage.
+ * Firebase is configured through Vite env vars and is required — Google
+ * Sign-In powers the app, and user data (keys, resume, applications) syncs
+ * to Firestore per user. There is no local-only mode.
  */
 const FIREBASE_CONFIG = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,

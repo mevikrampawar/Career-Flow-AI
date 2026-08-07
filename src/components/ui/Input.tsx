@@ -11,7 +11,7 @@ export function Field({
   children,
 }: {
   label?: string;
-  hint?: string;
+  hint?: ReactNode;
   error?: string;
   children: ReactNode;
 }) {

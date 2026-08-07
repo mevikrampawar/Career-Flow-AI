@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useKeys } from "../lib/keys";
 import { useSync } from "../lib/sync";
@@ -23,6 +24,53 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ExternalLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1 text-primary transition-colors hover:text-primary-container hover:underline"
+    >
+      {children}
+      <Icon name="arrow_outward" size={14} />
+    </a>
+  );
+}
+
+const LINKS: { href: string; label: string; hint: string; icon: string }[] = [
+  {
+    href: "https://console.groq.com/keys",
+    label: "Get a Groq API key",
+    hint: "Free AI key for resume analysis, matching, and emails.",
+    icon: "auto_awesome",
+  },
+  {
+    href: "https://console.apify.com",
+    label: "Get an Apify token",
+    hint: "Free monthly credits to scrape job boards.",
+    icon: "travel_explore",
+  },
+  {
+    href: "https://console.firebase.google.com/project/me-career-flow",
+    label: "Firebase console",
+    hint: "Your auth users and synced Firestore data.",
+    icon: "storage",
+  },
+  {
+    href: "https://console.cloud.google.com",
+    label: "Google Cloud console",
+    hint: "Enable the Gmail API and create your OAuth Client ID.",
+    icon: "cloud",
+  },
+];
+
 function KeyField({
   label,
   hint,
@@ -36,7 +84,7 @@ function KeyField({
   saved,
 }: {
   label: string;
-  hint: string;
+  hint: React.ReactNode;
   value: string;
   placeholder: string;
   onChange: (v: string) => void;
@@ -101,6 +149,7 @@ export default function SettingsPage() {
   const [testingGroq, setTestingGroq] = useState(false);
   const [testingApify, setTestingApify] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [aiGuideOpen, setAiGuideOpen] = useState(false);
   const gmail = useGmail();
 
   useEffect(() => {
@@ -150,9 +199,117 @@ export default function SettingsPage() {
       <header>
         <h1 className="font-headline-lg text-headline-lg text-on-surface">Settings</h1>
         <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
-          Bring your own keys — all AI and scraping calls run from your browser.
+          Bring your own keys — all AI and scraping calls run from your browser and sync to your
+          private cloud.
         </p>
       </header>
+
+      <Card>
+        <CardHeader
+          title="Setup guide"
+          subtitle="Follow these steps once and everything else is automatic."
+        />
+        <div className="space-y-2 px-5 pb-5">
+          {[
+            {
+              label: "Sign in with Google",
+              done: true,
+              action: null,
+            },
+            {
+              label: "Add your Groq API key",
+              done: keys.groqApiKey.trim().length > 0,
+              action: (
+                <ExternalLink href={LINKS[0].href}>Get a free key</ExternalLink>
+              ),
+            },
+            {
+              label: "Add your Apify API token",
+              done: keys.apifyApiToken.trim().length > 0,
+              action: (
+                <ExternalLink href={LINKS[1].href}>Get a free token</ExternalLink>
+              ),
+            },
+            {
+              label: "Upload your resume",
+              done: Boolean(resume),
+              action: (
+                <Link
+                  to="/app/resume"
+                  className="inline-flex items-center gap-1 text-primary transition-colors hover:text-primary-container hover:underline"
+                >
+                  Go to Resume
+                  <Icon name="arrow_forward" size={14} />
+                </Link>
+              ),
+            },
+            {
+              label: "Connect Gmail",
+              done: gmail.connected,
+              action: gmail.connected ? (
+                <span className="font-label-sm text-label-sm text-success">
+                  Connected
+                </span>
+              ) : (
+                <ExternalLink href={LINKS[3].href}>Setup guide below</ExternalLink>
+              ),
+            },
+          ].map((step) => (
+            <div
+              key={step.label}
+              className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant/70 px-4 py-2.5"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Icon
+                  name={step.done ? "check_circle" : "radio_button_unchecked"}
+                  size={18}
+                  filled={step.done}
+                  className={step.done ? "shrink-0 text-success" : "shrink-0 text-outline-variant"}
+                />
+                <span
+                  className={`truncate font-body-sm text-body-sm ${
+                    step.done ? "text-on-surface-variant" : "text-on-surface"
+                  }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+              {step.action}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Quick links"
+          subtitle="One-click shortcuts to the consoles you need."
+        />
+        <div className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
+          {LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noreferrer"
+              className="group flex items-start gap-3 rounded-lg border border-outline-variant/70 p-4 transition-colors hover:border-primary/40 hover:bg-surface-container-low"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-fixed text-on-primary-fixed">
+                <Icon name={link.icon} size={20} />
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-1 font-label-md text-label-md font-medium text-on-surface group-hover:text-primary">
+                  {link.label}
+                  <Icon name="arrow_outward" size={14} />
+                </span>
+                <span className="mt-0.5 block font-body-sm text-body-sm text-on-surface-variant">
+                  {link.hint}
+                </span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </Card>
 
       {syncing && (
         <div className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
@@ -225,11 +382,22 @@ export default function SettingsPage() {
         <CardHeader
           title="AI keys"
           subtitle="Free tiers: Groq console and Apify free plan."
+          action={
+            <Button size="sm" variant="ghost" onClick={() => setAiGuideOpen((o) => !o)}>
+              <Icon name={aiGuideOpen ? "expand_less" : "expand_more"} size={16} />
+              How to get keys
+            </Button>
+          }
         />
         <div className="space-y-4 px-5 pb-5">
           <KeyField
             label="Groq API key"
-            hint="Used for resume analysis, job matching, cover letters. Get one free at console.groq.com"
+            hint={
+              <>
+                Used for resume analysis, job matching, and emails.{" "}
+                <ExternalLink href={LINKS[0].href}>Get a free key</ExternalLink>
+              </>
+            }
             value={groqDraft}
             placeholder="gsk_…"
             onChange={setGroqDraft}
@@ -241,7 +409,12 @@ export default function SettingsPage() {
           />
           <KeyField
             label="Apify API token"
-            hint="Used to scrape job boards. Free monthly credits at console.apify.com"
+            hint={
+              <>
+                Used to scrape job boards.{" "}
+                <ExternalLink href={LINKS[1].href}>Free monthly credits</ExternalLink>
+              </>
+            }
             value={apifyDraft}
             placeholder="apify_api_…"
             onChange={setApifyDraft}
@@ -251,6 +424,43 @@ export default function SettingsPage() {
             testing={testingApify}
             saved={keys.apifyApiToken === apifyDraft.trim() && Boolean(apifyDraft.trim())}
           />
+
+          {aiGuideOpen && (
+            <div className="space-y-4 rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4">
+              <div>
+                <h4 className="font-headline-md text-headline-md text-on-surface">Groq API key (free)</h4>
+                <ol className="mt-2 list-decimal space-y-1.5 pl-5 font-body-sm text-body-sm text-on-surface">
+                  <li>
+                    Open{" "}
+                    <ExternalLink href="https://console.groq.com/keys">console.groq.com/keys</ExternalLink>{" "}
+                    and sign in (a Google or GitHub account works).
+                  </li>
+                  <li>Click <strong className="text-on-surface">Create API Key</strong>, name it anything, and copy it.</li>
+                  <li>Paste it in the <em>Groq API key</em> field above and hit <strong className="text-on-surface">Save key</strong>.</li>
+                  <li>Hit <strong className="text-on-surface">Test connection</strong> — you should see "Groq connection OK."</li>
+                </ol>
+              </div>
+              <div>
+                <h4 className="font-headline-md text-headline-md text-on-surface">Apify token (free tier)</h4>
+                <ol className="mt-2 list-decimal space-y-1.5 pl-5 font-body-sm text-body-sm text-on-surface">
+                  <li>
+                    Open{" "}
+                    <ExternalLink href="https://console.apify.com">console.apify.com</ExternalLink>{" "}
+                    and sign up for a free account.
+                  </li>
+                  <li>
+                    Go to{" "}
+                    <ExternalLink href="https://console.apify.com/settings/integrations">
+                      Settings → Integrations
+                    </ExternalLink>{" "}
+                    and reveal your <em>API token</em>.
+                  </li>
+                  <li>Paste it in the <em>Apify API token</em> field above and hit <strong className="text-on-surface">Save key</strong>.</li>
+                  <li>Hit <strong className="text-on-surface">Test connection</strong> to confirm.</li>
+                </ol>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

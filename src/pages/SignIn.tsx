@@ -56,7 +56,7 @@ export default function SignIn() {
           Welcome to Career Flow AI
         </h1>
         <p className="mt-2 text-center font-body-sm text-body-sm text-on-surface-variant">
-          Your keys, your data. Everything runs in your browser.
+          Sign in with Google to back up and sync your resume, keys, and applications.
         </p>
 
         {user ? (
@@ -74,26 +74,19 @@ export default function SignIn() {
               <p className="mt-6 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-container px-3 py-2 font-body-sm text-body-sm text-warning">
                 <Icon name="info" size={18} className="mt-0.5 shrink-0" />
                 <span>
-                  Firebase isn't configured yet, so you'll use local-only mode. Add{" "}
-                  <code className="font-mono">VITE_FIREBASE_*</code> env vars to
-                  enable Google sign-in and cloud key sync.
+                  Google sign-in is temporarily unavailable. Please try again in a few minutes.
                 </span>
               </p>
             )}
             <div className="mt-6 space-y-3">
-              {firebaseEnabled && (
-                <Button className="w-full" onClick={onSignIn} loading={busy}>
-                  <GoogleIcon />
-                  Continue with Google
-                </Button>
-              )}
               <Button
                 className="w-full"
-                variant="secondary"
-                loading={loading}
-                onClick={() => navigate("/app")}
+                onClick={onSignIn}
+                loading={busy || loading}
+                disabled={!firebaseEnabled}
               >
-                Continue locally
+                <GoogleIcon />
+                Continue with Google
               </Button>
             </div>
             {error && (

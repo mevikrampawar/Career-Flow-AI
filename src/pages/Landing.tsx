@@ -79,16 +79,9 @@ export default function Landing() {
                   Continue with Google
                 </Button>
               </Link>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">or</span>
-              <Link to="/app">
-                <Button size="lg" variant="ghost" className="text-primary">
-                  Use Email
-                  <Icon name="arrow_forward" size={18} />
-                </Button>
-              </Link>
             </div>
             <p className="mt-6 font-body-sm text-body-sm text-outline">
-              Bring your own API keys — your data stays yours.
+              Free to start — bring your own API keys, and your data syncs to your private cloud.
             </p>
           </div>
         </div>
