@@ -4,13 +4,49 @@ import { useAppStore } from "../store/useAppStore";
 import { useKeys } from "../lib/keys";
 import { analyzeResume } from "../lib/groq";
 import { parsePdfToText } from "../lib/resume";
-import type { AnalysisStatus, ResumeData } from "../lib/types";
+import type { AnalysisStatus, Education, Project, ResumeData, WorkExperience } from "../lib/types";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Chip, Badge } from "../components/ui/Badge";
 import { Field, Input, Textarea } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
 import { useToast } from "../components/ui/Toast";
+
+type ResumeDraft = {
+  fullName: string;
+  headline: string;
+  location: string;
+  email: string;
+  phone: string;
+  linkedin: string;
+  website: string;
+  summary: string;
+  skills: string[];
+  experience: WorkExperience[];
+  education: Education[];
+  projects: Project[];
+  certifications: string[];
+  languages: string[];
+};
+
+function draftFrom(r: ResumeData): ResumeDraft {
+  return {
+    fullName: r.fullName ?? "",
+    headline: r.headline ?? "",
+    location: r.location ?? "",
+    email: r.email ?? "",
+    phone: r.phone ?? "",
+    linkedin: r.linkedin ?? "",
+    website: r.website ?? "",
+    summary: r.summary ?? "",
+    skills: [...r.skills],
+    experience: r.experience.map((e) => ({ ...e, bullets: [...e.bullets], technologies: e.technologies ? [...e.technologies] : [] })),
+    education: r.education.map((e) => ({ ...e, details: e.details ? [...e.details] : [] })),
+    projects: r.projects?.map((p) => ({ ...p, technologies: p.technologies ? [...p.technologies] : [] })) ?? [],
+    certifications: r.certifications ? [...r.certifications] : [],
+    languages: r.languages ? [...r.languages] : [],
+  };
+}
 
 export default function ResumePage() {
   const resume = useAppStore((s) => s.resume);
@@ -23,6 +59,7 @@ export default function ResumePage() {
   const [progress, setProgress] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState("");
+  const [viewMode, setViewMode] = useState<"view" | "upload">("view");
   const inputRef = useRef<HTMLInputElement>(null);
 
   function readFileAsDataUrl(file: File): Promise<string> {
@@ -69,6 +106,7 @@ export default function ResumePage() {
       };
       setResume(data);
       setStatus("ready");
+      setViewMode("view");
       push("success", "Resume analyzed and saved.");
     } catch (e) {
       setStatus("error");
@@ -76,8 +114,17 @@ export default function ResumePage() {
     }
   }
 
-  if (resume && status === "idle") {
-    return <ResumeView resume={resume} onReanalyze={() => { setStatus("idle"); }} />;
+  if (resume && viewMode === "view") {
+    return (
+      <ResumeView
+        resume={resume}
+        onReanalyze={() => {
+          setStatus("idle");
+          setPreview("");
+          setViewMode("upload");
+        }}
+      />
+    );
   }
 
   const busy = status === "parsing" || status === "analyzing";
@@ -85,11 +132,20 @@ export default function ResumePage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <header>
-        <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-lg md:text-headline-lg">
-          Resume
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-lg md:text-headline-lg">
+            Resume
+          </h1>
+          {resume && !busy && (
+            <Button variant="ghost" size="sm" onClick={() => setViewMode("view")}>
+              <Icon name="arrow_back" size={16} />
+              Back to profile
+            </Button>
+          )}
+        </div>
         <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
           Upload a PDF. We extract your profile and analyze it with Groq.
+          {resume ? " This will re-analyze your current resume from scratch." : ""}
         </p>
       </header>
 
@@ -123,15 +179,15 @@ export default function ResumePage() {
             </div>
             <div className="flex flex-col gap-2">
               <span className="font-headline-md text-headline-md text-on-surface">
-                Drag & drop your resume
+                {resume ? "Upload a new resume" : "Drag & drop your resume"}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                PDF only · parsed locally in your browser
+                PDF only · parsed locally in your browser · re-analyzes everything
               </span>
             </div>
             <Button className="mt-2" onClick={() => inputRef.current?.click()}>
               <Icon name="upload_file" size={18} />
-              Browse Files
+              {resume ? "Choose a new file" : "Browse Files"}
             </Button>
           </>
         )}
@@ -173,56 +229,63 @@ export default function ResumePage() {
 function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: () => void }) {
   const updateResume = useAppStore((s) => s.updateResume);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({
-    fullName: resume.fullName ?? "",
-    headline: resume.headline ?? "",
-    location: resume.location ?? "",
-    email: resume.email ?? "",
-    phone: resume.phone ?? "",
-    linkedin: resume.linkedin ?? "",
-    summary: resume.summary ?? "",
-    skills: [...resume.skills],
-  });
-  const [newSkill, setNewSkill] = useState("");
+  const [draft, setDraft] = useState<ResumeDraft>(() => draftFrom(resume));
+  const set = <K extends keyof ResumeDraft>(key: K, value: ResumeDraft[K]) =>
+    setDraft((d) => ({ ...d, [key]: value }));
 
   function startEdit() {
-    setDraft({
-      fullName: resume.fullName ?? "",
-      headline: resume.headline ?? "",
-      location: resume.location ?? "",
-      email: resume.email ?? "",
-      phone: resume.phone ?? "",
-      linkedin: resume.linkedin ?? "",
-      summary: resume.summary ?? "",
-      skills: [...resume.skills],
-    });
+    setDraft(draftFrom(resume));
     setEditing(true);
   }
 
   function save() {
-    const skills = draft.skills.map((s) => s.trim()).filter(Boolean);
+    const clean = (v?: string) => v?.trim() || undefined;
+    const cleanList = (list: string[]) => [...new Set(list.map((s) => s.trim()).filter(Boolean))];
     updateResume({
-      fullName: draft.fullName.trim() || undefined,
-      headline: draft.headline.trim() || undefined,
-      location: draft.location.trim() || undefined,
-      email: draft.email.trim() || undefined,
-      phone: draft.phone.trim() || undefined,
-      linkedin: draft.linkedin.trim() || undefined,
+      fullName: clean(draft.fullName),
+      headline: clean(draft.headline),
+      location: clean(draft.location),
+      email: clean(draft.email),
+      phone: clean(draft.phone),
+      linkedin: clean(draft.linkedin),
+      website: clean(draft.website),
       summary: draft.summary.trim(),
-      skills: [...new Set(skills)],
+      skills: cleanList(draft.skills),
+      experience: draft.experience
+        .filter((e) => e.title.trim() || e.company.trim())
+        .map((e) => ({
+          ...e,
+          title: e.title.trim(),
+          company: e.company.trim(),
+          location: clean(e.location),
+          startDate: clean(e.startDate),
+          endDate: clean(e.endDate),
+          bullets: e.bullets.map((b) => b.trim()).filter(Boolean),
+          technologies: cleanList(e.technologies ?? []),
+        })),
+      education: draft.education
+        .filter((e) => e.degree.trim() || e.institution.trim())
+        .map((e) => ({
+          ...e,
+          degree: e.degree.trim(),
+          institution: e.institution.trim(),
+          startDate: clean(e.startDate),
+          endDate: clean(e.endDate),
+          details: (e.details ?? []).map((d) => d.trim()).filter(Boolean),
+        })),
+      projects: draft.projects
+        .filter((p) => p.name.trim())
+        .map((p) => ({
+          ...p,
+          name: p.name.trim(),
+          description: p.description.trim(),
+          link: clean(p.link),
+          technologies: cleanList(p.technologies ?? []),
+        })),
+      certifications: cleanList(draft.certifications),
+      languages: cleanList(draft.languages),
     });
     setEditing(false);
-  }
-
-  function addSkill() {
-    const skill = newSkill.trim();
-    if (!skill || draft.skills.some((s) => s.toLowerCase() === skill.toLowerCase())) return;
-    setDraft((d) => ({ ...d, skills: [...d.skills, skill] }));
-    setNewSkill("");
-  }
-
-  function set<K extends keyof typeof draft>(key: K, value: (typeof draft)[K]) {
-    setDraft((d) => ({ ...d, [key]: value }));
   }
 
   return (
@@ -242,52 +305,127 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={onReanalyze}>
+            <Icon name="refresh" size={16} />
             Re-upload
           </Button>
         </div>
       </div>
 
-      <Card className="p-6">
-        {editing ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name">
-                <Input value={draft.fullName} onChange={(e) => set("fullName", e.target.value)} />
-              </Field>
-              <Field label="Headline">
-                <Input value={draft.headline} onChange={(e) => set("headline", e.target.value)} />
-              </Field>
-              <Field label="Location">
-                <Input value={draft.location} onChange={(e) => set("location", e.target.value)} />
-              </Field>
-              <Field label="Email">
-                <Input value={draft.email} onChange={(e) => set("email", e.target.value)} />
-              </Field>
-              <Field label="Phone">
-                <Input value={draft.phone} onChange={(e) => set("phone", e.target.value)} />
-              </Field>
-              <Field label="LinkedIn">
-                <Input value={draft.linkedin} onChange={(e) => set("linkedin", e.target.value)} />
-              </Field>
+      {editing ? (
+        <Card className="p-6">
+          <div className="space-y-6">
+            <div>
+              <SectionTitle>Contact</SectionTitle>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <Field label="Full name">
+                  <Input value={draft.fullName} onChange={(e) => set("fullName", e.target.value)} />
+                </Field>
+                <Field label="Headline">
+                  <Input value={draft.headline} onChange={(e) => set("headline", e.target.value)} />
+                </Field>
+                <Field label="Location">
+                  <Input value={draft.location} onChange={(e) => set("location", e.target.value)} />
+                </Field>
+                <Field label="Email">
+                  <Input value={draft.email} onChange={(e) => set("email", e.target.value)} type="email" />
+                </Field>
+                <Field label="Phone">
+                  <Input value={draft.phone} onChange={(e) => set("phone", e.target.value)} type="tel" />
+                </Field>
+                <Field label="LinkedIn">
+                  <Input value={draft.linkedin} onChange={(e) => set("linkedin", e.target.value)} />
+                </Field>
+                <Field label="Website">
+                  <Input value={draft.website} onChange={(e) => set("website", e.target.value)} />
+                </Field>
+              </div>
             </div>
-            <Field label="Summary">
-              <Textarea
-                value={draft.summary}
-                onChange={(e) => set("summary", e.target.value)}
-                className="min-h-28"
-              />
-            </Field>
-            <div className="flex justify-end gap-2">
+
+            <div>
+              <SectionTitle>Summary</SectionTitle>
+              <div className="mt-3">
+                <Textarea
+                  value={draft.summary}
+                  onChange={(e) => set("summary", e.target.value)}
+                  className="min-h-28"
+                />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Skills</SectionTitle>
+              <div className="mt-3">
+                <ChipListField
+                  values={draft.skills}
+                  onChange={(v) => set("skills", v)}
+                  placeholder="Add a skill…"
+                />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Experience</SectionTitle>
+              <div className="mt-3">
+                <ExperienceEditor
+                  value={draft.experience}
+                  onChange={(v) => set("experience", v)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Education</SectionTitle>
+              <div className="mt-3">
+                <EducationEditor
+                  value={draft.education}
+                  onChange={(v) => set("education", v)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Projects</SectionTitle>
+              <div className="mt-3">
+                <ProjectEditor value={draft.projects} onChange={(v) => set("projects", v)} />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Certifications</SectionTitle>
+              <div className="mt-3">
+                <ChipListField
+                  values={draft.certifications}
+                  onChange={(v) => set("certifications", v)}
+                  placeholder="Add a certification…"
+                />
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>Languages</SectionTitle>
+              <div className="mt-3">
+                <ChipListField
+                  values={draft.languages}
+                  onChange={(v) => set("languages", v)}
+                  placeholder="Add a language…"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-variant/50 pt-4">
               <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>
                 Cancel
               </Button>
               <Button size="sm" onClick={save}>
+                <Icon name="check" size={16} />
                 Save changes
               </Button>
             </div>
           </div>
-        ) : (
-          <>
+        </Card>
+      ) : (
+        <>
+          <Card className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-headline-lg text-headline-lg text-on-surface">
@@ -297,7 +435,7 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
                   {[resume.headline, resume.location].filter(Boolean).join(" · ") || "—"}
                 </p>
                 <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
-                  {[resume.email, resume.phone, resume.linkedin].filter(Boolean).join(" · ") || ""}
+                  {[resume.email, resume.phone, resume.linkedin, resume.website].filter(Boolean).join(" · ") || ""}
                 </p>
               </div>
               <Badge tone="success" dot>
@@ -307,107 +445,392 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             {resume.summary && (
               <p className="mt-4 font-body-md text-body-md text-on-surface">{resume.summary}</p>
             )}
-          </>
-        )}
-      </Card>
+          </Card>
 
-      {resume.skills.length > 0 || editing ? (
-        <Card className="p-6">
-          <h3 className="font-headline-md text-headline-md text-on-surface">Skills</h3>
-          {editing ? (
-            <div className="mt-3">
-              <div className="flex flex-wrap gap-2">
-                {draft.skills.map((s) => (
-                  <Chip
-                    key={s}
-                    onRemove={() =>
-                      set(
-                        "skills",
-                        draft.skills.filter((x) => x !== s),
-                      )
-                    }
-                  >
-                    {s}
-                  </Chip>
+          {resume.skills.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Skills</SectionTitle>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {resume.skills.map((s) => (
+                  <Chip key={s}>{s}</Chip>
                 ))}
               </div>
-              <div className="mt-4 flex gap-2">
-                <Input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addSkill();
-                    }
-                  }}
-                  placeholder="Add a skill…"
-                />
-                <Button variant="secondary" size="md" onClick={addSkill} disabled={!newSkill.trim()}>
-                  <Icon name="add" size={18} />
-                  Add
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {resume.skills.map((s) => (
-                <Chip key={s}>{s}</Chip>
-              ))}
-            </div>
+            </Card>
           )}
-        </Card>
-      ) : null}
 
-      {resume.experience.length > 0 && (
-        <Card className="p-6">
-          <h3 className="font-headline-md text-headline-md text-on-surface">Experience</h3>
-          <div className="mt-4 space-y-5">
-            {resume.experience.map((xp, i) => (
-              <div key={i}>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
-                    {xp.title}
-                  </h4>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">
-                    {[xp.startDate, xp.endDate ?? (xp.current ? "Present" : undefined)].filter(Boolean).join(" – ")}
-                  </span>
-                </div>
-                <p className="font-body-md text-body-md font-medium text-primary">{xp.company}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface-variant">
-                  {xp.bullets.map((b, j) => (
-                    <li key={j}>{b}</li>
-                  ))}
-                </ul>
-                {xp.technologies?.length ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {xp.technologies.map((t) => (
-                      <Chip key={t}>{t}</Chip>
-                    ))}
+          {resume.experience.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Experience</SectionTitle>
+              <div className="mt-4 space-y-5">
+                {resume.experience.map((xp, i) => (
+                  <div key={i}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
+                        {xp.title}
+                      </h4>
+                      <span className="font-body-sm text-body-sm text-on-surface-variant">
+                        {[xp.startDate, xp.endDate ?? (xp.current ? "Present" : undefined)].filter(Boolean).join(" – ")}
+                      </span>
+                    </div>
+                    <p className="font-body-md text-body-md font-medium text-primary">{xp.company}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface-variant">
+                      {xp.bullets.map((b, j) => (
+                        <li key={j}>{b}</li>
+                      ))}
+                    </ul>
+                    {xp.technologies?.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {xp.technologies.map((t) => (
+                          <Chip key={t}>{t}</Chip>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                ))}
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
+            </Card>
+          )}
 
-      {resume.education.length > 0 && (
-        <Card className="p-6">
-          <h3 className="font-headline-md text-headline-md text-on-surface">Education</h3>
-          <div className="mt-4 space-y-4">
-            {resume.education.map((ed, i) => (
-              <div key={i}>
-                <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  {ed.institution}
-                  {ed.endDate ? ` · ${ed.endDate}` : ""}
-                </p>
+          {resume.education.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Education</SectionTitle>
+              <div className="mt-4 space-y-4">
+                {resume.education.map((ed, i) => (
+                  <div key={i}>
+                    <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">
+                      {ed.institution}
+                      {ed.endDate ? ` · ${ed.endDate}` : ""}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          )}
+
+          {resume.projects && resume.projects.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Projects</SectionTitle>
+              <div className="mt-4 space-y-5">
+                {resume.projects.map((p, i) => (
+                  <div key={i}>
+                    <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
+                      {p.name}
+                    </h4>
+                    {p.description && (
+                      <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">{p.description}</p>
+                    )}
+                    {p.link && (
+                      <a href={p.link.startsWith("http") ? p.link : `https://${p.link}`} target="_blank" rel="noreferrer" className="mt-1 inline-block font-body-sm text-body-sm text-primary hover:underline">
+                        {p.link}
+                      </a>
+                    )}
+                    {p.technologies?.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {p.technologies.map((t) => (
+                          <Chip key={t}>{t}</Chip>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {resume.certifications && resume.certifications.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Certifications</SectionTitle>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {resume.certifications.map((c) => (
+                  <Chip key={c}>{c}</Chip>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {resume.languages && resume.languages.length > 0 && (
+            <Card className="p-6">
+              <SectionTitle>Languages</SectionTitle>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {resume.languages.map((l) => (
+                  <Chip key={l}>{l}</Chip>
+                ))}
+              </div>
+            </Card>
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="font-headline-md text-headline-md text-on-surface">{children}</h3>
+  );
+}
+
+function ChipListField({
+  values,
+  onChange,
+  placeholder,
+}: {
+  values: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const [newValue, setNewValue] = useState("");
+  function add() {
+    const v = newValue.trim();
+    if (!v || values.some((x) => x.toLowerCase() === v.toLowerCase())) return;
+    onChange([...values, v]);
+    setNewValue("");
+  }
+  return (
+    <div>
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {values.map((v) => (
+            <Chip key={v} onRemove={() => onChange(values.filter((x) => x !== v))}>
+              {v}
+            </Chip>
+          ))}
+        </div>
+      )}
+      <div className="mt-2 flex gap-2">
+        <Input
+          value={newValue}
+          onChange={(e) => setNewValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder={placeholder ?? "Add…"}
+        />
+        <Button variant="secondary" size="md" onClick={add} disabled={!newValue.trim()}>
+          <Icon name="add" size={18} />
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function RemoveButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="grid size-8 shrink-0 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container/40 hover:text-error"
+    >
+      <Icon name="delete" size={18} />
+    </button>
+  );
+}
+
+function ExperienceEditor({
+  value,
+  onChange,
+}: {
+  value: WorkExperience[];
+  onChange: (v: WorkExperience[]) => void;
+}) {
+  function update(i: number, patch: Partial<WorkExperience>) {
+    onChange(value.map((xp, j) => (j === i ? { ...xp, ...patch } : xp)));
+  }
+  function remove(i: number) {
+    onChange(value.filter((_, j) => j !== i));
+  }
+  return (
+    <div className="space-y-3">
+      {value.map((xp, i) => (
+        <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface">
+              {xp.title || xp.company || `Experience ${i + 1}`}
+            </span>
+            <RemoveButton onClick={() => remove(i)} label="Remove experience" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Title">
+              <Input value={xp.title} onChange={(e) => update(i, { title: e.target.value })} placeholder="Software Engineer" />
+            </Field>
+            <Field label="Company">
+              <Input value={xp.company} onChange={(e) => update(i, { company: e.target.value })} placeholder="Acme Inc." />
+            </Field>
+            <Field label="Location">
+              <Input value={xp.location ?? ""} onChange={(e) => update(i, { location: e.target.value })} placeholder="Remote / San Francisco" />
+            </Field>
+            <Field label="Start date">
+              <Input value={xp.startDate ?? ""} onChange={(e) => update(i, { startDate: e.target.value })} placeholder="Jan 2021" />
+            </Field>
+            <Field label="End date">
+              <Input value={xp.endDate ?? ""} onChange={(e) => update(i, { endDate: e.target.value })} placeholder="Present" />
+            </Field>
+            <label className="flex items-center gap-2 self-end pb-2 font-body-sm text-body-sm text-on-surface">
+              <input
+                type="checkbox"
+                checked={Boolean(xp.current)}
+                onChange={(e) => update(i, { current: e.target.checked })}
+                className="size-4 accent-(--color-primary-container)"
+              />
+              Currently here
+            </label>
+          </div>
+          <Field label="Bullets (one per line)">
+            <Textarea
+              value={xp.bullets.join("\n")}
+              onChange={(e) => update(i, { bullets: e.target.value.split("\n") })}
+              className="min-h-24 font-mono text-body-sm"
+              placeholder={"Led a cross-functional team…\nShipped a new payments flow…"}
+            />
+          </Field>
+          <div>
+            <p className="mb-2 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              Technologies
+            </p>
+            <ChipListField
+              values={xp.technologies ?? []}
+              onChange={(t) => update(i, { technologies: t })}
+              placeholder="Add a technology…"
+            />
+          </div>
+        </div>
+      ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onChange([...value, { title: "", company: "", bullets: [] }])}
+      >
+        <Icon name="add" size={16} />
+        Add experience
+      </Button>
+    </div>
+  );
+}
+
+function EducationEditor({
+  value,
+  onChange,
+}: {
+  value: Education[];
+  onChange: (v: Education[]) => void;
+}) {
+  function update(i: number, patch: Partial<Education>) {
+    onChange(value.map((ed, j) => (j === i ? { ...ed, ...patch } : ed)));
+  }
+  function remove(i: number) {
+    onChange(value.filter((_, j) => j !== i));
+  }
+  return (
+    <div className="space-y-3">
+      {value.map((ed, i) => (
+        <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface">
+              {ed.degree || ed.institution || `Education ${i + 1}`}
+            </span>
+            <RemoveButton onClick={() => remove(i)} label="Remove education" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Degree">
+              <Input value={ed.degree} onChange={(e) => update(i, { degree: e.target.value })} placeholder="B.S. Computer Science" />
+            </Field>
+            <Field label="Institution">
+              <Input value={ed.institution} onChange={(e) => update(i, { institution: e.target.value })} placeholder="State University" />
+            </Field>
+            <Field label="Start date">
+              <Input value={ed.startDate ?? ""} onChange={(e) => update(i, { startDate: e.target.value })} placeholder="2014" />
+            </Field>
+            <Field label="End date">
+              <Input value={ed.endDate ?? ""} onChange={(e) => update(i, { endDate: e.target.value })} placeholder="2018" />
+            </Field>
+          </div>
+          <Field label="Details (one per line)">
+            <Textarea
+              value={(ed.details ?? []).join("\n")}
+              onChange={(e) => update(i, { details: e.target.value.split("\n") })}
+              className="min-h-16 font-mono text-body-sm"
+              placeholder={"Relevant coursework…\nHonors…"}
+            />
+          </Field>
+        </div>
+      ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onChange([...value, { degree: "", institution: "" }])}
+      >
+        <Icon name="add" size={16} />
+        Add education
+      </Button>
+    </div>
+  );
+}
+
+function ProjectEditor({
+  value,
+  onChange,
+}: {
+  value: Project[];
+  onChange: (v: Project[]) => void;
+}) {
+  function update(i: number, patch: Partial<Project>) {
+    onChange(value.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  }
+  function remove(i: number) {
+    onChange(value.filter((_, j) => j !== i));
+  }
+  return (
+    <div className="space-y-3">
+      {value.map((p, i) => (
+        <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-label-md text-label-md text-on-surface">
+              {p.name || `Project ${i + 1}`}
+            </span>
+            <RemoveButton onClick={() => remove(i)} label="Remove project" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Name">
+              <Input value={p.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="My Project" />
+            </Field>
+            <Field label="Link">
+              <Input value={p.link ?? ""} onChange={(e) => update(i, { link: e.target.value })} placeholder="github.com/me/project" />
+            </Field>
+          </div>
+          <Field label="Description">
+            <Textarea
+              value={p.description}
+              onChange={(e) => update(i, { description: e.target.value })}
+              className="min-h-16"
+              placeholder="What it does and your role…"
+            />
+          </Field>
+          <div>
+            <p className="mb-2 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              Technologies
+            </p>
+            <ChipListField
+              values={p.technologies ?? []}
+              onChange={(t) => update(i, { technologies: t })}
+              placeholder="Add a technology…"
+            />
+          </div>
+        </div>
+      ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onChange([...value, { name: "", description: "" }])}
+      >
+        <Icon name="add" size={16} />
+        Add project
+      </Button>
     </div>
   );
 }
