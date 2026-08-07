@@ -47,7 +47,7 @@ let _db: Firestore | null = null;
 function ensureApp() {
   if (!isFirebaseConfigured) {
     throw new Error(
-      "Firebase is not configured. Add VITE_FIREBASE_* env vars (see .env.example).",
+      "Firebase is not configured. Set the VITE_FIREBASE_* build env vars.",
     );
   }
   if (!_app) {
