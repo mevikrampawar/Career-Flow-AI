@@ -62,7 +62,7 @@ export default function JobsPage() {
     }
     if (!hasApify || !keys.apifyApiToken) {
       push("error", "Add your Apify API token in Settings first.");
-      navigate("/app/settings");
+      navigate("/app/profile");
       return;
     }
     setScraping(true);
@@ -167,7 +167,7 @@ export default function JobsPage() {
   async function onMatch(job: JobPosting) {
     if (!resume || !hasGroq) {
       push("error", "You need a resume and a Groq key to match.");
-      navigate("/app/settings");
+      navigate("/app/profile");
       return;
     }
     setMatchingId(jobKey(job));
@@ -347,7 +347,7 @@ export default function JobsPage() {
         <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
           <Icon name="key" size={18} />
           You need an Apify API token (free tier available) to scrape jobs.{" "}
-          <button className="font-semibold underline" onClick={() => navigate("/app/settings")}>
+          <button className="font-semibold underline" onClick={() => navigate("/app/profile")}>
             Add it in Settings
           </button>
         </p>

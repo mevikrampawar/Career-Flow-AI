@@ -24,8 +24,8 @@ export default function Dashboard() {
 
   const checks = [
     { done: Boolean(resume), label: "Upload your resume", href: "/app/resume" },
-    { done: hasGroq, label: "Add your Groq API key", href: "/app/settings" },
-    { done: hasApify, label: "Add your Apify API token", href: "/app/settings" },
+    { done: hasGroq, label: "Add your Groq API key", href: "/app/profile" },
+    { done: hasApify, label: "Add your Apify API token", href: "/app/profile" },
   ];
   const pending = checks.filter((c) => !c.done);
   const setupComplete = pending.length === 0;

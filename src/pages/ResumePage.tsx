@@ -98,7 +98,7 @@ export default function ResumePage() {
     }
     if (!hasGroq) {
       push("error", "Add your Groq API key in Settings first.");
-      navigate("/app/settings");
+      navigate("/app/profile");
       return;
     }
     setStatus("parsing");
@@ -237,7 +237,7 @@ export default function ResumePage() {
         <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
           <Icon name="key" size={18} />
           You need a Groq API key (free) to analyze your resume.{" "}
-          <button className="font-semibold underline" onClick={() => navigate("/app/settings")}>
+          <button className="font-semibold underline" onClick={() => navigate("/app/profile")}>
             Add it in Settings
           </button>
         </p>

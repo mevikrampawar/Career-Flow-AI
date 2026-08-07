@@ -205,6 +205,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       useAppStore.persist?.clearStorage?.();
       useAppStore.setState({
         resume: null,
+        candidateProfile: null,
         savedJobs: [],
         applications: [],
         searchJobs: [],

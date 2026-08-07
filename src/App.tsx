@@ -16,7 +16,7 @@ import ScrapedJobsPage from "./pages/ScrapedJobsPage";
 import ApplyPage from "./pages/ApplyPage";
 import ApplicationsPage from "./pages/ApplicationsPage";
 import EmailsPage from "./pages/EmailsPage";
-import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 export default function App() {
   return (
@@ -39,7 +39,7 @@ export default function App() {
                       <Route path="apply/:jobId" element={<ApplyPage />} />
                       <Route path="applications" element={<ApplicationsPage />} />
                       <Route path="emails" element={<EmailsPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
+                      <Route path="profile" element={<ProfilePage />} />
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

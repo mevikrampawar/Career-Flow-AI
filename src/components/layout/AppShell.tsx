@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useKeys } from "../../lib/keys";
@@ -7,6 +8,8 @@ import { useAppStore } from "../../store/useAppStore";
 import { Spinner } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 import { BrandLogo } from "../ui/Brand";
+import { Modal } from "../ui/Modal";
+import { ProfilePanel } from "../ProfilePanel";
 import ErrorBoundary from "../ui/ErrorBoundary";
 
 const NAV = [
@@ -17,7 +20,6 @@ const NAV = [
   { to: "/app/saved", label: "Saved Jobs", icon: "bookmark" },
   { to: "/app/scraped", label: "Scraped Jobs", icon: "folder_copy" },
   { to: "/app/resume", label: "Resume", icon: "description" },
-  { to: "/app/settings", label: "Settings", icon: "settings" },
 ];
 
 const MOBILE_NAV = [
@@ -26,7 +28,7 @@ const MOBILE_NAV = [
   { to: "/app/saved", label: "Saved", icon: "bookmark" },
   { to: "/app/emails", label: "Emails", icon: "mail" },
   { to: "/app/applications", label: "Apps", icon: "work_history" },
-  { to: "/app/settings", label: "Settings", icon: "settings" },
+  { to: "/app/profile", label: "Profile", icon: "person" },
 ];
 
 function Avatar({ name, email }: { name?: string; email?: string }) {
@@ -39,12 +41,13 @@ function Avatar({ name, email }: { name?: string; email?: string }) {
 }
 
 export default function AppShell() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const { hasGroq, hasApify } = useKeys();
   const { syncing, signedIn } = useSync();
   const { theme, toggleTheme } = useTheme();
   const resume = useAppStore((s) => s.resume);
   const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // Every route inside /app requires a Google account so data syncs to
   // Firestore. No local-only mode.
@@ -129,7 +132,11 @@ export default function AppShell() {
                 )}
               </div>
             )}
-            <div className="flex items-center gap-3 px-1 py-1">
+            <button
+              onClick={() => setProfileOpen(true)}
+              className="flex w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-surface-container"
+              title="Profile"
+            >
               <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-label-md font-semibold text-on-surface">
@@ -139,14 +146,8 @@ export default function AppShell() {
                   {user.email}
                 </div>
               </div>
-              <button
-                onClick={() => signOut()}
-                className="grid size-8 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container hover:text-error"
-                title="Sign out"
-              >
-                <Icon name="logout" size={18} />
-              </button>
-            </div>
+              <Icon name="chevron_right" size={18} className="text-outline-variant" />
+            </button>
           </div>
         </div>
       </aside>
@@ -165,11 +166,11 @@ export default function AppShell() {
             <Icon name={theme === "dark" ? "light_mode" : "dark_mode"} size={22} filled />
           </button>
           <button
-            onClick={() => navigate("/app/settings")}
+            onClick={() => navigate("/app/profile")}
             className="grid size-9 place-items-center rounded-full text-on-surface-variant"
-            aria-label="Settings"
+            aria-label="Profile"
           >
-            <Icon name="settings" size={22} />
+            <Icon name="person" size={22} />
           </button>
         </div>
       </header>
@@ -201,6 +202,10 @@ export default function AppShell() {
           </NavLink>
         ))}
       </nav>
+
+      <Modal open={profileOpen} onClose={() => setProfileOpen(false)} title="Profile" wide>
+        <ProfilePanel />
+      </Modal>
     </div>
   );
 }

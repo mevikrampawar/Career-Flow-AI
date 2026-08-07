@@ -24,7 +24,6 @@ import { Icon } from "../components/ui/Icon";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { MatchScore, ScoreLabel } from "../components/MatchScore";
-import { CandidateProfileCard } from "../components/CandidateProfileCard";
 import { useToast } from "../components/ui/Toast";
 
 const SAVE_DELAY = 500;
@@ -201,7 +200,7 @@ export default function ApplyPage() {
     if (kind === "tailor" || kind === "letter") {
       if (!resume || !hasGroq) {
         push("error", "You need a resume and a Groq key for this.");
-        navigate("/app/settings");
+        navigate("/app/profile");
         return;
       }
     }
@@ -718,31 +717,13 @@ export default function ApplyPage() {
               Emails attach to this job everywhere — saved, scraped, search, and this application.
             </p>
           </div>
-        </div>
-      </Card>
 
-      <CandidateProfileCard />
-
-      <Card>
-        <CardHeader
-          title="Send via Gmail"
-          subtitle="One-click send with your resume attached. Review everything first."
-        />
-        <div className="space-y-4 p-5 pt-2">
-          {!gmail.connected ? (
-            <div className="flex items-start gap-2 rounded-lg bg-warning-container/60 px-4 py-3 font-body-sm text-body-sm text-warning">
-              <Icon name="info" size={16} className="mt-0.5 shrink-0" />
-              <span>
-                Connect Gmail in{" "}
-                <button className="font-semibold underline" onClick={() => navigate("/app/settings")}>
-                  Settings
-                </button>{" "}
-                to send applications from here.
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
+          <div className="border-t border-variant/50 pt-4">
+            <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              Send
+            </p>
+            {gmail.connected ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Button
                   onClick={() => setConfirmOpen(true)}
                   disabled={!canSend || sending}
@@ -760,14 +741,41 @@ export default function ApplyPage() {
                         : "Ready when you are."}
                   </span>
                 )}
+                <div className="flex w-full flex-wrap gap-x-5 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
+                  <span>From: {gmail.email}</span>
+                  <span>To: {emails.join(", ") || "—"}</span>
+                  <span>Attachment: {attachments.map((a) => a.filename).join(", ") || "none"}</span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
-                <span>From: {gmail.email}</span>
-                <span>To: {emails.join(", ") || "—"}</span>
-                <span>Attachment: {attachments.map((a) => a.filename).join(", ") || "none"}</span>
+            ) : (
+              <div className="mt-2 flex items-start gap-2 rounded-lg bg-warning-container/60 px-4 py-3 font-body-sm text-body-sm text-warning">
+                <Icon name="info" size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  Gmail isn't connected.{" "}
+                  <button className="font-semibold underline" onClick={() => navigate("/app/profile")}>
+                    Connect it in Profile
+                  </button>{" "}
+                  for one-click send — or use <strong>Copy email</strong> above and paste it into your mail
+                  app, attaching your resume.
+                </span>
               </div>
-            </>
-          )}
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Notes"
+          subtitle="Interview prep, contacts, follow-ups — anything for this application."
+        />
+        <div className="p-5 pt-2">
+          <Textarea
+            placeholder="Things to remember about this application…"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="min-h-28"
+          />
         </div>
       </Card>
 
