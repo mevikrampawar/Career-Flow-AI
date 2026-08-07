@@ -92,7 +92,83 @@ export default function EmailsPage() {
     return (b.sentAt ?? b.repliedAt ?? 0) - (a.sentAt ?? a.repliedAt ?? 0);
   });
 
-  const discovered = list.filter((r) => r.status === "discovered").length;
+  const discoveredRows = list.filter((r) => r.status === "discovered");
+  const pipelineRows = list.filter((r) => r.status !== "discovered");
+
+  function renderRow(row: EmailRow, prominent: boolean) {
+    const meta = STATUS_META[row.status];
+    return (
+      <div
+        key={row.key}
+        role="button"
+        tabIndex={0}
+        onClick={() => navigate(`/app/apply/${encodeURIComponent(row.key)}`)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            navigate(`/app/apply/${encodeURIComponent(row.key)}`);
+          }
+        }}
+        className={`group flex cursor-pointer flex-wrap items-center gap-4 rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:card-shadow ${
+          prominent
+            ? "border-primary/40 bg-surface-container-lowest hover:border-primary/60"
+            : "border-border-variant bg-surface-container-lowest hover:border-outline-variant"
+        }`}
+      >
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+          {row.company.charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
+            {row.title}
+          </span>
+          <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+            {row.company}
+          </span>
+          <span className="mt-1 flex flex-wrap items-center gap-1.5">
+            {row.emails.length > 0 ? (
+              row.emails.map((email) => (
+                <span
+                  key={email}
+                  className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-border-variant/50 bg-surface px-2 py-0.5 font-body-sm text-body-sm text-primary"
+                >
+                  <Icon name="mail" size={14} />
+                  <span className="truncate">{email}</span>
+                </span>
+              ))
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 font-body-sm text-body-sm text-on-surface-variant">
+                <Icon name="add_link" size={14} />
+                No address yet
+              </span>
+            )}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {row.sentAt && (
+            <span className="hidden font-body-sm text-body-sm text-on-surface-variant sm:inline">
+              Sent {fmt(row.sentAt)}
+            </span>
+          )}
+          <Badge tone={meta.tone} dot>
+            {meta.label}
+          </Badge>
+          {prominent ? (
+            <Button size="sm">
+              Open & send
+              <Icon name="arrow_forward" size={16} />
+            </Button>
+          ) : (
+            <Icon
+              name="chevron_right"
+              size={18}
+              className="text-outline-variant transition-transform group-hover:translate-x-0.5"
+            />
+          )}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -102,21 +178,22 @@ export default function EmailsPage() {
             Email automation
           </h1>
           <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
-            Every contact email across your jobs — what's sent, drafted, and waiting on a reply.
+            Every contact email across your jobs — what's discovered, drafted, sent, and waiting on a reply.
           </p>
         </div>
-        {discovered > 0 && (
-          <Link to="/app/applications" className="inline-block">
+        {discoveredRows.length > 0 && (
+          <Link to="/app/jobs" className="inline-block">
             <Button>
-              <Icon name="forward_to_inbox" size={18} />
-              Open applications
+              <Icon name="travel_explore" size={18} />
+              Hunt more jobs
             </Button>
           </Link>
         )}
       </header>
 
-      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Sent" value={sent} icon="send" tone="info" note="Emails delivered" />
+      <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        <Stat label="Discovered" value={discoveredRows.length} icon="alternate_email" tone="info" note="Emails found — ready to send" />
+        <Stat label="Sent" value={sent} icon="send" tone="neutral" note="Emails delivered" />
         <Stat label="Drafts" value={drafts} icon="edit_note" tone="neutral" note="Written, not sent" />
         <Stat label="Waiting on reply" value={waiting} icon="schedule_send" tone="warning" note="Sent, no reply yet" />
         <Stat label="Replied" value={replied} icon="mark_email_read" tone="success" note="Someone wrote back" />
@@ -126,7 +203,7 @@ export default function EmailsPage() {
         <EmptyState
           icon="mail"
           title="No contact emails yet"
-          description="When a job scrape or your saved roles surface a contact email, it shows up here with its send status. Add emails from the Apply page for any job."
+          description="When a job scrape or your saved roles surface a contact email, it shows up here automatically with a ready-to-send draft — no manual setup."
           action={
             <Link to="/app/jobs" className="inline-block">
               <Button>
@@ -137,66 +214,35 @@ export default function EmailsPage() {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {list.map((row) => {
-            const meta = STATUS_META[row.status];
-            return (
-              <div
-                key={row.key}
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(`/app/apply/${encodeURIComponent(row.key)}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/app/apply/${encodeURIComponent(row.key)}`);
-                  }
-                }}
-                className="group flex cursor-pointer flex-wrap items-center gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-4 transition-all hover:-translate-y-0.5 hover:border-outline-variant hover:card-shadow"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
-                  {row.company.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
-                    {row.title}
-                  </span>
-                  <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
-                    {row.company}
-                  </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                    {row.emails.length > 0 ? (
-                      row.emails.map((email) => (
-                        <span
-                          key={email}
-                          className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-border-variant/50 bg-surface px-2 py-0.5 font-body-sm text-body-sm text-primary"
-                        >
-                          <Icon name="mail" size={14} />
-                          <span className="truncate">{email}</span>
-                        </span>
-                      ))
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 font-body-sm text-body-sm text-on-surface-variant">
-                        <Icon name="add_link" size={14} />
-                        No address yet
-                      </span>
-                    )}
-                  </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  {row.sentAt && (
-                    <span className="hidden font-body-sm text-body-sm text-on-surface-variant sm:inline">
-                      Sent {fmt(row.sentAt)}
-                    </span>
-                  )}
-                  <Badge tone={meta.tone} dot>
-                    {meta.label}
-                  </Badge>
-                  <Icon name="chevron_right" size={18} className="text-outline-variant transition-transform group-hover:translate-x-0.5" />
+        <div className="space-y-8">
+          {discoveredRows.length > 0 && (
+            <section>
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-headline-md text-headline-md text-on-surface">
+                  Discovered · ready to send
+                </h2>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">
+                  {discoveredRows.length} job{discoveredRows.length === 1 ? "" : "s"} with contact emails found
                 </span>
               </div>
-            );
-          })}
+              <div className="space-y-3">
+                {discoveredRows.map((row) => renderRow(row, true))}
+              </div>
+            </section>
+          )}
+          {pipelineRows.length > 0 && (
+            <section>
+              <div className="mb-3">
+                <h2 className="font-headline-md text-headline-md text-on-surface">Your pipeline</h2>
+                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                  Applications with a drafted, sent, or answered email.
+                </p>
+              </div>
+              <div className="space-y-3">
+                {pipelineRows.map((row) => renderRow(row, false))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>

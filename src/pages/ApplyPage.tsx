@@ -124,6 +124,26 @@ export default function ApplyPage() {
     setEmailBody(existing.emailBody ?? draft?.body ?? "");
   }, [existing]);
 
+  // If a job has contact emails but nothing drafted yet, curate a ready-to-send
+  // email automatically (subject + body + posting link) so "Send application"
+  // works in one click — no manual "Create email" step. AI re-curation is still
+  // one "Regenerate" click away.
+  useEffect(() => {
+    if (!existing || hydrated.current !== existing.id) return;
+    if (existing.emailDraft || existing.emailSubject || existing.emailBody) return;
+    const jobEmails = existing.emails?.length ? existing.emails : job?.emails;
+    if (!jobEmails?.length) return;
+    const subject = buildEmailSubject(existing.job);
+    const body = buildEmailBody(existing.job, resume, existing.coverLetter);
+    setEmailSubject(subject);
+    setEmailBody(body);
+    updateApplication(existing.id, {
+      emailSubject: subject,
+      emailBody: body,
+      emailDraft: fullDraft(subject, body, jobEmails),
+    });
+  }, [existing?.id, existing?.emails, job?.id]);
+
   useEffect(() => {
     if (!existing) return;
     const t = setTimeout(() => {

@@ -292,6 +292,9 @@ export const useAppStore = create<AppState>()(
           );
         }
         if (Object.keys(patch).length > 0) set(patch);
+        // Re-scan the freshly archived jobs so any description that slipped
+        // past scrape-time extraction still gets its emails attached.
+        get().backfillEmails();
         return { added: fresh.length, duplicates };
       },
 

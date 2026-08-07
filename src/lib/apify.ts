@@ -1,5 +1,5 @@
 import type { JobPosting, JobSearchParams } from "./types";
-import { extractEmails, jobDedupeKey } from "./format";
+import { extractEmails, jobDedupeKey, jobKey } from "./format";
 
 const APIFY_API = "https://api.apify.com/v2";
 const MAX_POLLS = 36;
@@ -337,10 +337,12 @@ function jobsFromItems(
     }
   }
 
-  // De-duplicate by url/title+company
+  // De-duplicate by the canonical job key (URL-based, query-string tolerant) so
+  // the Job Matcher shows exactly what lands in Scraped Jobs. Using the raw URL
+  // here let tracking-param variants of one posting count as separate jobs.
   const seen = new Set<string>();
   const unique = jobs.filter((j) => {
-    const key = j.url || `${j.title}|${j.company}`.toLowerCase();
+    const key = jobKey(j);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
