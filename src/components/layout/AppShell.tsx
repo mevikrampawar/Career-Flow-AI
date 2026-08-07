@@ -72,8 +72,11 @@ export default function AppShell() {
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-surface-container-low md:flex">
         <div className="px-6 pb-6 pt-8">
-          <NavLink to="/app" className="flex items-center gap-2">
+          <NavLink to="/app" className="flex items-center gap-2.5">
             <BrandLogo className="h-9 w-auto" />
+            <span className="font-display text-headline-sm font-semibold leading-tight text-on-surface">
+              Career Flow AI
+            </span>
           </NavLink>
         </div>
 

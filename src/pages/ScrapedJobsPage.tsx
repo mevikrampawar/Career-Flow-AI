@@ -7,6 +7,7 @@ import { Card } from "../components/ui/Card";
 import { Field, Input, Select } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import { Modal } from "../components/ui/Modal";
 import { EmptyState } from "../components/ui/EmptyState";
 import { useToast } from "../components/ui/Toast";
 import { useKeys } from "../lib/keys";
@@ -30,6 +31,7 @@ export default function ScrapedJobsPage() {
   const saveJob = useAppStore((s) => s.saveJob);
   const removeSavedJob = useAppStore((s) => s.removeSavedJob);
   const updateJobMatch = useAppStore((s) => s.updateJobMatch);
+  const setScrapedJobs = useAppStore((s) => s.setScrapedJobs);
   const resume = useAppStore((s) => s.resume);
   const { keys } = useKeys();
   const { push } = useToast();
@@ -41,6 +43,7 @@ export default function ScrapedJobsPage() {
   const [experience, setExperience] = useState("all");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [matchingId, setMatchingId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const departments = uniqueValues(scrapedJobs, (j) => j.department);
   const experiences = uniqueValues(scrapedJobs, (j) => j.experienceLevel);
@@ -80,6 +83,15 @@ export default function ScrapedJobsPage() {
     setRemoteOnly(false);
   }
 
+  function onFlush() {
+    setScrapedJobs([]);
+    setConfirmOpen(false);
+    push(
+      "success",
+      "Scraped Jobs cleared — re-running a hunt will add matching jobs back as new.",
+    );
+  }
+
   async function onMatch(job: JobPosting) {
     if (!resume) {
       push("error", "Upload a resume first to unlock AI matching.");
@@ -98,14 +110,22 @@ export default function ScrapedJobsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
-          Scraped Jobs
-        </h1>
-        <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
-          Every job you've scraped, auto-saved and de-duplicated. New hunches land here
-          automatically.
-        </p>
+      <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+            Scraped Jobs
+          </h1>
+          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+            Every job you've scraped, auto-saved and de-duplicated. New hunches land here
+            automatically.
+          </p>
+        </div>
+        {scrapedJobs.length > 0 && (
+          <Button variant="outline-danger" size="sm" onClick={() => setConfirmOpen(true)}>
+            <Icon name="delete_sweep" size={16} />
+            Flush all
+          </Button>
+        )}
       </header>
 
       <Card className="p-6">
@@ -226,6 +246,27 @@ export default function ScrapedJobsPage() {
           ))}
         </section>
       )}
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Flush all scraped jobs?"
+      >
+        <p className="font-body-md text-body-md text-on-surface-variant">
+          {scrapedJobs.length} scraped job{scrapedJobs.length === 1 ? "" : "s"} will be
+          permanently removed from your account. Saved jobs are kept. If a future hunt finds
+          the same posting again, it will be added back as new.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={onFlush}>
+            <Icon name="delete_sweep" size={16} />
+            Flush {scrapedJobs.length} job{scrapedJobs.length === 1 ? "" : "s"}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
