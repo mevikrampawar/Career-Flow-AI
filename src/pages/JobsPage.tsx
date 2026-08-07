@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import { useKeys } from "../lib/keys";
 import { searchJobs, DEFAULT_ACTORS } from "../lib/apify";
 import { scoreJobMatch } from "../lib/groq";
+import { jobDedupeKey, jobKey } from "../lib/format";
 import type { JobPosting, JobSearchParams } from "../lib/types";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Field, Input, Select } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
+import { EmptyState } from "../components/ui/EmptyState";
+import { SkeletonJobCard } from "../components/ui/Skeleton";
 import { JobCard } from "../components/JobCard";
 import { useToast } from "../components/ui/Toast";
 
@@ -25,23 +28,31 @@ export default function JobsPage() {
   const resume = useAppStore((s) => s.resume);
   const searchJobsState = useAppStore((s) => s.searchJobs);
   const setSearchJobs = useAppStore((s) => s.setSearchJobs);
+  const addScrapedJobs = useAppStore((s) => s.addScrapedJobs);
   const saveJob = useAppStore((s) => s.saveJob);
   const savedJobs = useAppStore((s) => s.savedJobs);
+  const scrapedJobs = useAppStore((s) => s.scrapedJobs);
   const updateJobMatch = useAppStore((s) => s.updateJobMatch);
   const { keys, hasApify, hasGroq } = useKeys();
   const { push } = useToast();
 
   const [params, setParams] = useState<JobSearchParams>(DEFAULTS);
   const [scraping, setScraping] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [progress, setProgress] = useState("");
   const [matchingId, setMatchingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const savedIds = new Set(savedJobs.map((j) => j.id));
+  const savedIds = new Set(savedJobs.map(jobKey));
+  // Archive keys as of the LAST scrape (before the current results were added),
+  // so fresh results don't get mislabelled "Previously scraped".
+  const beforeScrapeRef = useRef(new Set(scrapedJobs.map(jobDedupeKey)));
 
-  async function onScrape() {
+  async function onScrape(next?: JobSearchParams) {
+    const p = next ?? params;
+    if (next) setParams(next);
     setError(null);
-    if (!params.query.trim()) {
+    if (!p.query.trim()) {
       setError("Enter a job title or keyword.");
       return;
     }
@@ -52,15 +63,28 @@ export default function JobsPage() {
     }
     setScraping(true);
     setProgress("Starting scrape...");
+    beforeScrapeRef.current = new Set(
+      useAppStore.getState().scrapedJobs.map(jobDedupeKey),
+    );
     try {
-      const jobs = await searchJobs(keys.apifyApiToken, params, DEFAULT_ACTORS, (msg) =>
+      const jobs = await searchJobs(keys.apifyApiToken, p, DEFAULT_ACTORS, (msg) =>
         setProgress(msg),
       );
       setSearchJobs(jobs);
+      setSearched(true);
+      const { added, duplicates } = addScrapedJobs(jobs);
       if (jobs.length === 0) {
         push("info", "No jobs found. Try broader keywords or another board.");
+      } else if (added === 0) {
+        push(
+          "success",
+          `You're all caught up — ${jobs.length} job${jobs.length === 1 ? "" : "s"} found, all already in Scraped Jobs.`,
+        );
       } else {
-        push("success", `Found ${jobs.length} jobs.`);
+        push(
+          "success",
+          `Found ${jobs.length} jobs. ${added} new saved, ${duplicates} already scraped.`,
+        );
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scrape failed.");
@@ -76,15 +100,21 @@ export default function JobsPage() {
       navigate("/app/settings");
       return;
     }
-    setMatchingId(job.id);
+    setMatchingId(jobKey(job));
     try {
       const match = await scoreJobMatch(keys.groqApiKey, resume, job);
-      updateJobMatch(job.id, match);
+      updateJobMatch(jobKey(job), match);
     } catch (e) {
       push("error", e instanceof Error ? e.message : "Match failed.");
     } finally {
       setMatchingId(null);
     }
+  }
+
+  function clearResults() {
+    setSearchJobs([]);
+    setSearched(false);
+    push("info", "Job Matcher results cleared — Scraped Jobs kept.");
   }
 
   const results = searchJobsState;
@@ -165,39 +195,82 @@ export default function JobsPage() {
             />
             Remote only
           </label>
-          <Button onClick={onScrape} loading={scraping} className="ml-auto">
+          <Button onClick={() => onScrape()} loading={scraping} className="ml-auto">
             <Icon name="travel_explore" size={18} />
             {scraping ? "Scraping…" : "Hunt jobs"}
           </Button>
         </div>
         {error && <p className="mt-3 font-body-sm text-body-sm text-error">{error}</p>}
-        {progress && (
-          <p className="mt-3 flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
-            <Spinner className="size-4" /> {progress}
-          </p>
-        )}
       </Card>
 
-      {results.length > 0 && (
+      {scraping ? (
         <section>
           <div className="mb-6">
             <h2 className="font-headline-md text-headline-md text-on-surface">
+              Hunting on {params.board === "linkedin" ? "LinkedIn" : params.board === "indeed" ? "Indeed" : "Workable"}…
+            </h2>
+            {progress && (
+              <p className="mt-1 flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+                <Spinner className="size-4" /> {progress}
+              </p>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2 xl:grid-cols-3">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <SkeletonJobCard key={i} />
+            ))}
+          </div>
+        </section>
+      ) : results.length > 0 ? (
+        <section>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-headline-md text-headline-md text-on-surface">
               {results.length} results
             </h2>
+            <Button size="sm" variant="ghost" onClick={clearResults}>
+              <Icon name="delete_sweep" size={16} />
+              Clear results
+            </Button>
           </div>
           <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2 xl:grid-cols-3">
             {results.map((job) => (
               <JobCard
-                key={job.id}
+                key={jobKey(job)}
                 job={job}
-                saved={savedIds.has(job.id)}
-                onSave={saveJob}
+                saved={savedIds.has(jobKey(job))}
+                alreadyScraped={beforeScrapeRef.current.has(jobDedupeKey(job))}
+                onSave={(j) => {
+                  saveJob(j);
+                  push("success", "Saved to Saved Jobs.", {
+                    label: "View",
+                    onClick: () => navigate("/app/saved"),
+                  });
+                }}
                 onMatch={onMatch}
-                matching={matchingId === job.id}
+                matching={matchingId === jobKey(job)}
               />
             ))}
           </div>
         </section>
+      ) : (
+        <EmptyState
+          icon={searched ? "search_off" : "travel_explore"}
+          title={searched ? "No jobs found" : "Ready to hunt?"}
+          description={
+            searched
+              ? "Try broader keywords, another board, or drop the remote filter."
+              : "Scrape live openings from LinkedIn, Indeed, and Workable, then score them against your resume."
+          }
+          action={
+            <Button
+              variant="secondary"
+              onClick={() => onScrape({ ...DEFAULTS, query: "Software Engineer" })}
+            >
+              <Icon name="auto_awesome" size={16} />
+              Try a sample search
+            </Button>
+          }
+        />
       )}
 
       {!hasApify && (

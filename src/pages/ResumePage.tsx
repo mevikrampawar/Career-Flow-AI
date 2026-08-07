@@ -25,6 +25,15 @@ export default function ResumePage() {
   const [preview, setPreview] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error ?? new Error("Could not read the file."));
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleFile(file: File) {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       push("error", "Please upload a PDF resume.");
@@ -39,6 +48,13 @@ export default function ResumePage() {
     setProgress("Parsing PDF...");
     try {
       const text = await parsePdfToText(file);
+      const pdfDataUrl = await readFileAsDataUrl(file);
+      // Keep the PDF only if it fits inside Firestore's 1 MiB document limit
+      // alongside the parsed text (base64 is ~1.33x the file size).
+      const pdfOk = pdfDataUrl.length < 600_000;
+      if (!pdfOk) {
+        push("info", "Resume PDF is large — it will still be parsed, but skipped as an attachment.");
+      }
       setPreview(text);
       setProgress("Analyzing with Groq...");
       setStatus("analyzing");
@@ -47,6 +63,7 @@ export default function ResumePage() {
         id: crypto.randomUUID(),
         fileName: file.name,
         rawText: text,
+        ...(pdfOk ? { pdfDataUrl } : {}),
         ...analysis,
         updatedAt: Date.now(),
       };

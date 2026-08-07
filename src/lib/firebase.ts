@@ -81,24 +81,36 @@ export function getGoogleProvider() {
 
 const keyDoc = (uid: string) => doc(getDb(), "users", uid, "settings", "keys");
 
-export async function saveKeysToFirestore(uid: string, keys: { groqApiKey?: string; apifyApiToken?: string }) {
+export async function saveKeysToFirestore(
+  uid: string,
+  keys: { groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string },
+) {
   const data: Record<string, unknown> = { updatedAt: Date.now() };
   if (keys.groqApiKey !== undefined) data.groqApiKey = keys.groqApiKey;
   if (keys.apifyApiToken !== undefined) data.apifyApiToken = keys.apifyApiToken;
+  if (keys.gmailClientId !== undefined) data.gmailClientId = keys.gmailClientId;
   await setDoc(keyDoc(uid), data, { merge: true });
 }
 
-export async function fetchKeysFromFirestore(uid: string): Promise<{ groqApiKey?: string; apifyApiToken?: string } | null> {
+export async function fetchKeysFromFirestore(
+  uid: string,
+): Promise<{ groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string } | null> {
   const snap = await getDoc(keyDoc(uid));
   if (!snap.exists()) return null;
-  return snap.data() as { groqApiKey?: string; apifyApiToken?: string };
+  return snap.data() as { groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string };
 }
 
 export function onKeysSnapshot(
   uid: string,
-  cb: (keys: { groqApiKey?: string; apifyApiToken?: string } | null) => void,
+  cb: (
+    keys: { groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string } | null,
+  ) => void,
 ) {
   return onSnapshot(keyDoc(uid), (snap) => {
-    cb(snap.exists() ? (snap.data() as { groqApiKey?: string; apifyApiToken?: string }) : null);
+    cb(
+      snap.exists()
+        ? (snap.data() as { groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string })
+        : null,
+    );
   });
 }

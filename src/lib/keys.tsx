@@ -18,7 +18,7 @@ import {
 
 const LS_KEY = "career-flow:keys";
 
-const EMPTY: ApiKeys = { groqApiKey: "", apifyApiToken: "" };
+const EMPTY: ApiKeys = { groqApiKey: "", apifyApiToken: "", gmailClientId: "" };
 
 function readLocal(): ApiKeys {
   try {
@@ -28,6 +28,7 @@ function readLocal(): ApiKeys {
     return {
       groqApiKey: parsed.groqApiKey ?? "",
       apifyApiToken: parsed.apifyApiToken ?? "",
+      gmailClientId: parsed.gmailClientId ?? "",
     };
   } catch {
     return { ...EMPTY };
@@ -56,11 +57,12 @@ export function KeysProvider({ children }: { children: ReactNode }) {
     if (!user || !isFirebaseConfigured) return;
     setSyncing(true);
 
-    const apply = (remote: { groqApiKey?: string; apifyApiToken?: string } | null) => {
+    const apply = (remote: { groqApiKey?: string; apifyApiToken?: string; gmailClientId?: string } | null) => {
       const local = readLocal();
       const merged: ApiKeys = {
         groqApiKey: remote?.groqApiKey ?? local.groqApiKey,
         apifyApiToken: remote?.apifyApiToken ?? local.apifyApiToken,
+        gmailClientId: remote?.gmailClientId ?? local.gmailClientId,
       };
       setKeysState(merged);
       localStorage.setItem(LS_KEY, JSON.stringify(merged));

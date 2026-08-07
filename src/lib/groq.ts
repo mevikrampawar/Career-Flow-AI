@@ -297,3 +297,61 @@ export async function tailorResume(
     { model: GROQ_MODELS.analysis, temperature: 0.4, maxTokens: 1024 },
   );
 }
+
+const EMAIL_PROMPT = `You write concise, professional job-application emails on behalf of a candidate.
+Write to the hiring team / recruiter for the given job.
+
+Return a JSON object with EXACTLY this shape:
+{
+  "subject": string (a short, specific subject line, under 9 words, referencing the role and company),
+  "body": string (plain text, 120-220 words. Greeting, 1-2 tight paragraphs tying the candidate's real experience and the tailored summary to the role's needs, a call to action to review the attached resume, and a signature line with the candidate's name and contact info. No markdown, no bullet lists, no subject in the body.)
+}
+Use only facts from the candidate's resume — never fabricate. Return JSON only, no markdown.`;
+
+export interface EmailDraftResult {
+  subject: string;
+  body: string;
+}
+
+export async function generateEmail(
+  apiKey: string,
+  resume: ResumeData,
+  job: JobPosting,
+  coverLetter?: string,
+): Promise<EmailDraftResult> {
+  const resumeBlob = JSON.stringify(
+    {
+      name: resume.fullName,
+      summary: resume.summary,
+      skills: resume.skills,
+      experience: resume.experience,
+      education: resume.education,
+      email: resume.email,
+      phone: resume.phone,
+      location: resume.location,
+      linkedin: resume.linkedin,
+    },
+    null,
+    1,
+  ).slice(0, 24000);
+  const jobBlob = [job.title, job.company, job.location, job.salary, job.employmentType, job.description]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 12000);
+
+  const out = await chatJson<EmailDraftResult>(
+    apiKey,
+    [
+      { role: "system", content: EMAIL_PROMPT },
+      {
+        role: "user",
+        content: `CANDIDATE RESUME:\n${resumeBlob}\n\nJOB:\n${jobBlob}${coverLetter ? `\n\nCOVER LETTER (reference it, don't paste it):\n${coverLetter.slice(0, 3000)}` : ""}`,
+      },
+    ],
+    { model: GROQ_MODELS.analysis, temperature: 0.5, maxTokens: 700 },
+  );
+  return {
+    subject: (out.subject ?? "").trim(),
+    body: (out.body ?? "").trim(),
+  };
+}

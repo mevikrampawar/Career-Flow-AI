@@ -13,7 +13,7 @@ export function MatchScore({
   if (score >= 90) {
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full bg-accent-lime/20 text-[#3c4200] ${pill}`}
+        className={`inline-flex items-center gap-1 rounded-full bg-accent-lime/20 text-on-surface ${pill}`}
         title={`AI match: ${score}%`}
       >
         <Icon name="auto_awesome" size={14} />

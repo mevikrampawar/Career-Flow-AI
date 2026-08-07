@@ -1,31 +1,21 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
+import {
+  STATUS_LABEL,
+  STATUS_TONE,
+  NEXT_STATUS,
+} from "../lib/applications";
 import type { Application } from "../lib/types";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Icon } from "../components/ui/Icon";
 import { Modal } from "../components/ui/Modal";
-import { Select, Textarea } from "../components/ui/Input";
+import { Select } from "../components/ui/Input";
 import { useToast } from "../components/ui/Toast";
-
-const STATUS: Record<Application["status"], { label: string; tone: "neutral" | "success" | "warning" | "error" | "info" }> = {
-  draft: { label: "Draft", tone: "neutral" },
-  applied: { label: "Applied", tone: "info" },
-  interview: { label: "Interview", tone: "warning" },
-  offer: { label: "Offer", tone: "success" },
-  rejected: { label: "Rejected", tone: "error" },
-  closed: { label: "Closed", tone: "neutral" },
-};
-
-const NEXT: Record<Application["status"], Application["status"]> = {
-  draft: "applied",
-  applied: "interview",
-  interview: "offer",
-  offer: "offer",
-  rejected: "rejected",
-  closed: "closed",
-};
+import { jobKey } from "../lib/format";
 
 function fmt(ts?: number) {
   if (!ts) return "—";
@@ -36,28 +26,31 @@ function fmt(ts?: number) {
 }
 
 export default function ApplicationsPage() {
+  const navigate = useNavigate();
   const applications = useAppStore((s) => s.applications);
   const updateApplication = useAppStore((s) => s.updateApplication);
-  const [filter, setFilter] = useState<Application["status"] | "all">("all");
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [notesDraft, setNotesDraft] = useState("");
-  const [notesSaved, setNotesSaved] = useState(false);
+  const removeApplication = useAppStore((s) => s.removeApplication);
   const { push } = useToast();
 
-  const shown = filter === "all" ? applications : applications.filter((a) => a.status === filter);
-  const open = applications.find((a) => a.id === openId) ?? null;
+  const [filter, setFilter] = useState<Application["status"] | "all">("all");
+  const [removing, setRemoving] = useState<Application | null>(null);
 
-  function openDetails(app: Application) {
-    setNotesDraft(app.notes ?? "");
-    setNotesSaved(false);
-    setOpenId(app.id);
+  const shown = filter === "all" ? applications : applications.filter((a) => a.status === filter);
+
+  const terminal: Application["status"][] = ["offer", "rejected", "closed"];
+
+  function advance(app: Application) {
+    const next = NEXT_STATUS[app.status];
+    if (next === app.status) return;
+    updateApplication(app.id, { status: next });
+    push("success", `Moved to ${STATUS_LABEL[next]}.`);
   }
 
-  function saveNotes() {
-    if (!open) return;
-    updateApplication(open.id, { notes: notesDraft.trim() || undefined });
-    setNotesSaved(true);
-    push("success", "Notes saved.");
+  function confirmRemove() {
+    if (!removing) return;
+    removeApplication(removing.id);
+    push("success", "Application removed.");
+    setRemoving(null);
   }
 
   return (
@@ -68,7 +61,7 @@ export default function ApplicationsPage() {
             Applications
           </h1>
           <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
-            Track every application from draft to offer.
+            Track every application from draft to offer. Click a row to prep & take notes.
           </p>
         </div>
         <Select
@@ -77,59 +70,131 @@ export default function ApplicationsPage() {
           className="w-44"
         >
           <option value="all">All statuses</option>
-          {Object.entries(STATUS).map(([k, v]) => (
+          {Object.entries(STATUS_LABEL).map(([k, label]) => (
             <option key={k} value={k}>
-              {v.label}
+              {label}
             </option>
           ))}
         </Select>
       </div>
 
       {shown.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center gap-4 p-10 text-center">
-          <span className="grid size-16 place-items-center rounded-full bg-surface-container-low">
-            <Icon name="work_history" size={32} className="text-primary" />
-          </span>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            {applications.length === 0
-              ? "No applications yet. Save jobs and hit Apply to start tracking."
-              : "Nothing matches this filter."}
-          </p>
-        </Card>
+        <EmptyState
+          icon="work_history"
+          title={applications.length === 0 ? "No applications yet" : "Nothing here"}
+          description={
+            applications.length === 0
+              ? "Save jobs and hit Apply to start tracking. Your prep, cover letters, notes, and progress all live here in one place."
+              : "No applications match this filter yet."
+          }
+          action={
+            applications.length === 0 ? (
+              <Link to="/app/jobs" className="inline-block">
+                <Button>
+                  <Icon name="travel_explore" size={18} />
+                  Hunt jobs
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={() => setFilter("all")}>
+                Show all applications
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-3">
           {shown.map((app) => {
-            const st = STATUS[app.status];
+            const st = STATUS_TONE[app.status];
+            const next = NEXT_STATUS[app.status];
+            const advanceable = !terminal.includes(app.status) && next !== app.status;
             return (
-              <Card key={app.id} className="p-4 transition-shadow hover:card-shadow">
+              <Card
+                key={app.id}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
+                  navigate(`/app/apply/${encodeURIComponent(jobKey(app.job))}`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/app/apply/${encodeURIComponent(jobKey(app.job))}`);
+                  }
+                }}
+                className="group cursor-pointer p-4 transition-all hover:-translate-y-0.5 hover:card-shadow"
+              >
                 <div className="flex flex-wrap items-center gap-4">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
-                    {app.job.company.charAt(0).toUpperCase()}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/app/apply/${encodeURIComponent(jobKey(app.job))}`);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-4 text-left"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                      {app.job.company.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
+                        {app.job.title}
+                      </span>
+                  <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+                    {app.job.company} · {fmt(app.appliedAt ?? app.createdAt)}
+                    {app.notes ? " · has notes" : ""}
+                    {app.tailoredHighlights || app.coverLetter ? " · has prep" : ""}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-body-md text-body-md font-semibold text-on-surface">
-                      {app.job.title}
-                    </h3>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">
-                      {app.job.company} · {fmt(app.appliedAt ?? app.createdAt)}
-                    </p>
-                  </div>
-                  <Badge tone={st.tone} dot>
-                    {st.label}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => openDetails(app)}>
-                      Details
-                    </Button>
-                    {app.status !== "offer" && app.status !== "rejected" && app.status !== "closed" && (
-                      <Button
-                        size="sm"
-                        onClick={() => updateApplication(app.id, { status: NEXT[app.status] })}
-                      >
+                </span>
+              </button>
+              <div className="flex items-center gap-2">
+                {app.lastReplyAt && (
+                  <span
+                    className="inline-flex items-center gap-1 font-label-sm text-label-sm text-warning"
+                    title={`Reply received ${new Date(app.lastReplyAt).toLocaleString()}`}
+                  >
+                    <Icon name="mark_email_unread" size={16} filled />
+                    Reply
+                  </span>
+                )}
+                <Badge tone={st} dot>
+                  {STATUS_LABEL[app.status]}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                    {advanceable && (
+                      <Button size="sm" onClick={() => advance(app)}>
                         {app.status === "draft" ? "Mark applied" : "Advance"}
                         <Icon name="arrow_forward" size={14} />
                       </Button>
                     )}
+                    {app.emailDraft && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(app.emailDraft!);
+                          push("success", "Drafted email copied to clipboard.");
+                        }}
+                        aria-label="Copy drafted email"
+                        className="grid size-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary-fixed hover:text-primary"
+                      >
+                        <Icon name="content_copy" size={18} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setRemoving(app)}
+                      aria-label="Remove application"
+                      className="grid size-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container/40 hover:text-error"
+                    >
+                      <Icon name="delete" size={18} />
+                    </button>
+                    <Icon
+                      name="chevron_right"
+                      size={18}
+                      className="hidden text-outline-variant transition-transform group-hover:translate-x-0.5 sm:block"
+                    />
                   </div>
                 </div>
               </Card>
@@ -138,64 +203,27 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      <Modal open={Boolean(open)} onClose={() => setOpenId(null)} title={open?.job.title ?? ""} wide>
-        {open && (
+      <Modal
+        open={Boolean(removing)}
+        onClose={() => setRemoving(null)}
+        title="Remove application?"
+      >
+        {removing && (
           <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={STATUS[open.status].tone} dot>
-                {STATUS[open.status].label}
-              </Badge>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">
-                {open.job.company} · applied {fmt(open.appliedAt)}
-              </span>
-              {open.job.url && (
-                <a href={open.job.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 font-label-sm text-label-sm text-primary hover:underline">
-                  Open posting
-                  <Icon name="arrow_outward" size={14} />
-                </a>
-              )}
-            </div>
-            {open.tailoredHighlights && (
-              <div>
-                <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
-                  Tailored highlights
-                </h4>
-                <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 font-mono text-body-sm text-on-surface">
-                  {open.tailoredHighlights}
-                </pre>
-              </div>
-            )}
-            {open.coverLetter && (
-              <div>
-                <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
-                  Cover letter
-                </h4>
-                <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 font-mono text-body-sm text-on-surface">
-                  {open.coverLetter}
-                </pre>
-              </div>
-            )}
-            <div>
-              <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
-                Notes
-              </h4>
-              <Textarea
-                value={notesDraft}
-                onChange={(e) => {
-                  setNotesDraft(e.target.value);
-                  setNotesSaved(false);
-                }}
-                placeholder="Interview prep, contacts, follow-ups…"
-                className="mt-2 min-h-24"
-              />
-              <div className="mt-2 flex items-center justify-end gap-2">
-                {notesSaved && (
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">Saved</span>
-                )}
-                <Button size="sm" onClick={saveNotes}>
-                  Save notes
-                </Button>
-              </div>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              Remove the application record for{" "}
+              <span className="font-medium text-on-surface">{removing.job.title}</span> at{" "}
+              {removing.job.company}? Your saved job stays untouched, so you can apply again
+              anytime.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setRemoving(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={confirmRemove}>
+                <Icon name="delete" size={16} />
+                Remove
+              </Button>
             </div>
           </div>
         )}

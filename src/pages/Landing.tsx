@@ -205,7 +205,7 @@ export default function Landing() {
                       Stripe · Remote
                     </div>
                   </div>
-                  <span className="rounded bg-accent-lime/20 px-2 py-1 text-xs font-semibold text-[#3c4200]">
+                  <span className="rounded bg-accent-lime/20 px-2 py-1 text-xs font-semibold text-on-surface">
                     98% Match
                   </span>
                 </div>

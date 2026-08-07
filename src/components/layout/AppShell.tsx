@@ -1,14 +1,18 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useKeys } from "../../lib/keys";
+import { useSync } from "../../lib/sync";
+import { useTheme } from "../../lib/theme";
 import { useAppStore } from "../../store/useAppStore";
-import { Button } from "../ui/Button";
+import { Button, Spinner } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
   { to: "/app/applications", label: "Applications", icon: "work_history" },
   { to: "/app/jobs", label: "Job Matcher", icon: "auto_awesome" },
+  { to: "/app/saved", label: "Saved Jobs", icon: "bookmark" },
+  { to: "/app/scraped", label: "Scraped Jobs", icon: "folder_copy" },
   { to: "/app/resume", label: "Resume", icon: "description" },
   { to: "/app/settings", label: "Settings", icon: "settings" },
 ];
@@ -16,6 +20,8 @@ const NAV = [
 const MOBILE_NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
   { to: "/app/jobs", label: "Matcher", icon: "auto_awesome" },
+  { to: "/app/saved", label: "Saved", icon: "bookmark" },
+  { to: "/app/scraped", label: "Scraped", icon: "folder_copy" },
   { to: "/app/applications", label: "Apps", icon: "work_history" },
   { to: "/app/settings", label: "Settings", icon: "settings" },
 ];
@@ -32,6 +38,8 @@ function Avatar({ name, email }: { name?: string; email?: string }) {
 export default function AppShell() {
   const { user, signOut } = useAuth();
   const { hasGroq, hasApify } = useKeys();
+  const { syncing, signedIn } = useSync();
+  const { theme, toggleTheme } = useTheme();
   const resume = useAppStore((s) => s.resume);
   const navigate = useNavigate();
 
@@ -85,6 +93,28 @@ export default function AppShell() {
           )}
 
           <div className="border-t border-border-variant pt-4">
+            <button
+              onClick={toggleTheme}
+              className="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              <Icon name={theme === "dark" ? "light_mode" : "dark_mode"} size={20} filled />
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+            {signedIn && (
+              <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-border-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface-variant">
+                {syncing ? (
+                  <>
+                    <Spinner className="size-4" /> Syncing…
+                  </>
+                ) : (
+                  <>
+                    <Icon name="cloud_done" size={16} filled className="text-success" />
+                    Data synced
+                  </>
+                )}
+              </div>
+            )}
             {user ? (
               <div className="flex items-center gap-3 px-1 py-1">
                 <Avatar name={user.displayName ?? undefined} email={user.email ?? undefined} />
@@ -128,13 +158,22 @@ export default function AppShell() {
             CareerFlow AI
           </span>
         </NavLink>
-        <button
-          onClick={() => navigate("/app/settings")}
-          className="grid size-9 place-items-center rounded-full text-on-surface-variant"
-          aria-label="Settings"
-        >
-          <Icon name="settings" size={22} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleTheme}
+            className="grid size-9 place-items-center rounded-full text-on-surface-variant"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <Icon name={theme === "dark" ? "light_mode" : "dark_mode"} size={22} filled />
+          </button>
+          <button
+            onClick={() => navigate("/app/settings")}
+            className="grid size-9 place-items-center rounded-full text-on-surface-variant"
+            aria-label="Settings"
+          >
+            <Icon name="settings" size={22} />
+          </button>
+        </div>
       </header>
 
       {/* Main */}

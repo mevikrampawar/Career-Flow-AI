@@ -1,4 +1,5 @@
 import type { JobPosting, JobSearchParams } from "./types";
+import { jobDedupeKey } from "./format";
 
 const APIFY_API = "https://api.apify.com/v2";
 const MAX_POLLS = 60;
@@ -11,9 +12,9 @@ export interface ApifyActorConfig {
 }
 
 export const DEFAULT_ACTORS: ApifyActorConfig = {
-  linkedin: "dscraping/linkedin-jobs-scraper",
-  indeed: "mis1apep/indeed-jobs-scraper",
-  workable: "dscraping/workable-scraper",
+  linkedin: "curious_coder~linkedin-jobs-scraper",
+  indeed: "misceres~indeed-scraper",
+  workable: "schnellscrapers~workable-jobs-scraper",
 };
 
 export class ApifyError extends Error {
@@ -24,17 +25,14 @@ export class ApifyError extends Error {
 }
 
 async function apifyFetch(token: string, path: string, init?: RequestInit) {
-  const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(
-    `${APIFY_API}${path}${sep}token=${encodeURIComponent(token)}`,
-    {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init?.headers ?? {}),
-      },
+  const res = await fetch(`${APIFY_API}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
     },
-  );
+  });
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -65,7 +63,7 @@ export async function runActor(
 ): Promise<string> {
   const data = await apifyFetch(
     token,
-    `/acts/${actorId}/runs?timeout=300&memory=2048`,
+    `/actors/${actorId}/runs?timeout=600`,
     {
       method: "POST",
       body: JSON.stringify(input),
@@ -113,20 +111,15 @@ async function getDatasetItems(
 // ---- Board-specific input builders ----
 
 function linkedInInput(params: JobSearchParams): Record<string, unknown> {
+  const keywords = encodeURIComponent(params.query);
+  const location = encodeURIComponent(params.location || "");
+  const remote = params.remoteOnly ? "&f_WT=2" : "";
   return {
-    queries: [
-      {
-        query: params.query,
-        location: params.location || "United States",
-        country: "US",
-      },
+    urls: [
+      `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${location}${remote}`,
     ],
-    resultsPerPage: Math.min(params.maxResults, 50),
-    maxItems: params.maxResults,
-    maxConcurrency: 5,
-    scrapeCompanyUrl: true,
-    scrapeFullDescription: true,
-    onlyAtRemote: params.remoteOnly ? true : undefined,
+    scrapeCompany: false,
+    count: Math.max(params.maxResults, 10),
   };
 }
 
@@ -134,20 +127,19 @@ function indeedInput(params: JobSearchParams): Record<string, unknown> {
   return {
     position: params.query,
     location: params.location || "",
-    country: "USA",
-    maxItems: params.maxResults,
+    country: "US",
+    maxItemsPerSearch: params.maxResults,
     parseCompanyDetails: false,
-    ...(params.remoteOnly ? { remoteOnly: true } : {}),
   };
 }
 
 function workableInput(params: JobSearchParams): Record<string, unknown> {
   return {
-    searchTerms: params.query,
+    query: params.query,
     location: params.location || undefined,
     maxItems: params.maxResults,
-    maxConcurrency: 3,
-    parseCompanyDetails: true,
+    remoteOnly: params.remoteOnly ? true : undefined,
+    parseDescription: true,
   };
 }
 
@@ -158,7 +150,7 @@ function firstString(...vals: unknown[]): string | undefined {
     if (typeof v === "string" && v.trim()) return v.trim();
     if (typeof v === "object" && v !== null) {
       const obj = v as Record<string, unknown>;
-      for (const k of ["text", "value", "name", "title"]) {
+      for (const k of ["text", "value", "name", "title", "fullLocation"]) {
         if (typeof obj[k] === "string" && obj[k].trim()) return obj[k].trim();
       }
     }
@@ -179,12 +171,30 @@ function normalizeJob(
   const description = firstString(
     raw.description,
     raw.descriptionHtml,
+    raw.descriptionHTML,
     raw.jobDescription,
     raw.snippet,
     raw.body,
   ) ?? "";
 
-  let url = firstString(raw.url, raw.externalApplyLink, raw.link, raw.applyLink, raw.jobUrl, raw.href);
+  const emails = extractEmails(
+    description,
+    raw.contactEmail,
+    raw.recruiterEmail,
+    raw.email,
+    raw.emails,
+    raw.applyEmail,
+  );
+
+  let url = firstString(
+    raw.url,
+    raw.applyUrl,
+    raw.positionUrl,
+    raw.externalApplyLink,
+    raw.link,
+    raw.jobUrl,
+    raw.href,
+  );
   if (url && !url.startsWith("http")) {
     if (board === "linkedin") url = `https://www.linkedin.com${url}`;
     else if (board === "indeed") url = `https://www.indeed.com${url}`;
@@ -192,6 +202,7 @@ function normalizeJob(
 
   return {
     id: String(raw.id ?? raw.positionId ?? raw.jobId ?? `${board}-${title}-${company}`),
+    key: jobDedupeKey({ board, title, company, url }),
     board,
     title,
     company,
@@ -199,13 +210,45 @@ function normalizeJob(
     description,
     url: url ?? "",
     salary: firstString(raw.salary, raw.salaryText, raw.compensation) ?? undefined,
-    postedAt: firstString(raw.postedAt, raw.date, raw.postingDate) ?? undefined,
+    postedAt: firstString(raw.postedAt, raw.publishedAt, raw.date, raw.postingDate) ?? undefined,
     employmentType: firstString(raw.employmentType, raw.jobType, raw.type) ?? undefined,
+    department: firstString(raw.department, raw.departmentName) ?? undefined,
+    experienceLevel: firstString(raw.experienceLevel, raw.seniorityLevel, raw.experience) ??
+      undefined,
+    jobFunction: firstString(raw.jobFunction, raw.function) ?? undefined,
     remote:
       Boolean(raw.remote) ||
+      Boolean(raw.isRemote) ||
+      (typeof raw.workplace === "string" && /remote/i.test(raw.workplace)) ||
       (typeof raw.location === "string" && /remote/i.test(raw.location)) ||
       undefined,
+    emails,
   };
+}
+
+// Matches email-like strings and filters out obvious placeholder / junk values.
+const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const BAD_EMAIL = /example|sample|yourname|youremail|test|@2x|sentry|@png|@jpg|@webp|@svg|email\.com/i;
+
+function extractEmails(...texts: unknown[]): string[] | undefined {
+  const combined = texts
+    .map((t) => {
+      if (Array.isArray(t)) return t.filter((x) => typeof x === "string").join(" ");
+      return firstString(t) ?? "";
+    })
+    .join(" ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;|&lt;|&gt;|&quot;|&#39;/g, " ");
+  const found = combined.match(EMAIL_RE);
+  if (!found) return undefined;
+  const set = new Set<string>();
+  for (const m of found) {
+    const email = m.toLowerCase();
+    if (BAD_EMAIL.test(email)) continue;
+    if (email.length > 60) continue;
+    set.add(email);
+  }
+  return set.size ? [...set].slice(0, 5) : undefined;
 }
 
 export async function searchJobs(
