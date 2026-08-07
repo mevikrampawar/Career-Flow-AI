@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
 import { KeysProvider } from "./lib/keys";
 import { GmailProvider } from "./lib/GmailProvider";
@@ -26,7 +26,7 @@ export default function App() {
           <GmailProvider>
             <ThemeProvider>
               <SyncProvider>
-                <BrowserRouter basename="/Career-Flow-AI">
+                <HashRouter>
                   <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/signin" element={<SignIn />} />
@@ -43,7 +43,7 @@ export default function App() {
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
-                </BrowserRouter>
+                </HashRouter>
               </SyncProvider>
             </ThemeProvider>
           </GmailProvider>

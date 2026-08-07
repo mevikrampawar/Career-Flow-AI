@@ -2,8 +2,9 @@ import type { JobPosting, JobSearchParams } from "./types";
 import { jobDedupeKey } from "./format";
 
 const APIFY_API = "https://api.apify.com/v2";
-const MAX_POLLS = 60;
+const MAX_POLLS = 36;
 const POLL_INTERVAL_MS = 5000;
+const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
 export interface ApifyActorConfig {
   linkedin: string;
@@ -76,28 +77,65 @@ async function getRun(token: string, runId: string) {
   return apifyFetch(token, `/actor-runs/${runId}`);
 }
 
+/** Current status of an Apify run plus its dataset id (when one exists yet). */
+export async function checkActorStatus(
+  token: string,
+  runId: string,
+): Promise<{ status: string; datasetId: string | undefined }> {
+  const run = await getRun(token, runId);
+  return {
+    status: run?.data?.status as string,
+    datasetId: run?.data?.defaultDatasetId as string | undefined,
+  };
+}
+
+/**
+ * Poll an Apify run until it reaches a terminal state or the poll budget is
+ * spent. Terminal states (including TIMED_OUT/ABORTED) are returned rather
+ * than thrown so callers can still harvest partial results from the dataset.
+ */
+export async function pollActor(
+  token: string,
+  runId: string,
+  onProgress?: (status: string) => void,
+): Promise<{ status: string; datasetId: string | undefined }> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  for (let i = 0; i < MAX_POLLS; i++) {
+    const res = await checkActorStatus(token, runId);
+    onProgress?.(res.status);
+    if (
+      res.status === "SUCCEEDED" ||
+      res.status === "FAILED" ||
+      res.status === "ABORTED" ||
+      res.status === "TIMED_OUT"
+    ) {
+      return res;
+    }
+    if (Date.now() > deadline) return res;
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  }
+  return { status: "TIMED_OUT", datasetId: undefined };
+}
+
 export async function waitForRun(
   token: string,
   runId: string,
   onProgress?: (status: string) => void,
 ): Promise<string> {
-  for (let i = 0; i < MAX_POLLS; i++) {
-    const run = await getRun(token, runId);
-    const status = run?.data?.status as string;
-    onProgress?.(status);
-    if (status === "SUCCEEDED") return run?.data?.defaultDatasetId as string;
-    if (status === "FAILED" || status === "ABORTED" || status === "TIMED_OUT") {
-      const detail = run?.data?.statusMessage || run?.data?.exitInfo;
-      throw new ApifyError(
-        detail ? `Actor run ${status}: ${detail}` : `Actor run did not succeed (status: ${status}).`,
-      );
-    }
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-  }
-  throw new ApifyError("Actor run timed out while waiting for results.");
+  const { status, datasetId } = await pollActor(token, runId, onProgress);
+  if (status === "SUCCEEDED") return datasetId as string;
+  // Failed/timed-out runs can still leave partial listings in the dataset —
+  // return whatever we have so the hunt isn't a total loss.
+  if (datasetId) return datasetId;
+  const run = await getRun(token, runId);
+  const detail = run?.data?.statusMessage || run?.data?.exitInfo;
+  throw new ApifyError(
+    detail ? `Actor run ${status}: ${detail}` : `Actor run did not succeed (status: ${status}).`,
+  );
 }
 
-async function getDatasetItems(
+/** Raw items from an Apify dataset, tolerant of missing/odd shapes. */
+export async function fetchActorResult(
   token: string,
   datasetId: string,
 ): Promise<Record<string, unknown>[]> {
@@ -257,6 +295,22 @@ export async function searchJobs(
   actors: ApifyActorConfig,
   onProgress?: (message: string) => void,
 ): Promise<JobPosting[]> {
+  onProgress?.("Starting scrape on Apify...");
+  const runId = await startScrape(token, params, actors);
+  const jobs = await finishScrape(token, params.board, runId, params.query, onProgress);
+  return jobs.slice(0, params.maxResults);
+}
+
+/**
+ * Kick off an Apify actor run and return its run id. Splitting the "start"
+ * from the "wait + collect" stages lets the app persist the run id and resume
+ * a live hunt after a page refresh or navigation.
+ */
+export async function startScrape(
+  token: string,
+  params: JobSearchParams,
+  actors: ApifyActorConfig,
+): Promise<string> {
   const actorId = actors[params.board];
   const input = (() => {
     switch (params.board) {
@@ -268,26 +322,42 @@ export async function searchJobs(
         return workableInput(params);
     }
   })();
-
-  onProgress?.("Starting scrape on Apify...");
   const runId = await runActor(token, actorId, input);
-  onProgress?.("Scrape started. Fetching results...");
+  return runId as string;
+}
 
+/** Wait for a started Apify run and normalize its dataset into jobs. */
+export async function finishScrape(
+  token: string,
+  board: JobPosting["board"],
+  runId: string,
+  fallbackQuery: string,
+  onProgress?: (message: string) => void,
+): Promise<JobPosting[]> {
+  onProgress?.("Scrape started. Fetching results...");
   const datasetId = await waitForRun(token, runId, (status) => {
     if (status !== "RUNNING") onProgress?.(`Scrape status: ${status}.`);
   });
 
-  const items = await getDatasetItems(token, datasetId);
+  const items = await fetchActorResult(token, datasetId);
+  return jobsFromItems(items, board, fallbackQuery);
+}
+
+function jobsFromItems(
+  items: Record<string, unknown>[],
+  board: JobPosting["board"],
+  fallbackQuery: string,
+): JobPosting[] {
   const jobs: JobPosting[] = [];
   for (const item of items) {
     // Some actors return an array of listings under a "results"/"items" key.
     if (Array.isArray(item.results)) {
       for (const sub of item.results as Record<string, unknown>[]) {
-        const j = normalizeJob(sub, params.board, params.query);
+        const j = normalizeJob(sub, board, fallbackQuery);
         if (j) jobs.push(j);
       }
     } else {
-      const j = normalizeJob(item, params.board, params.query);
+      const j = normalizeJob(item, board, fallbackQuery);
       if (j) jobs.push(j);
     }
   }
@@ -301,5 +371,5 @@ export async function searchJobs(
     return true;
   });
 
-  return unique.slice(0, params.maxResults);
+  return unique;
 }

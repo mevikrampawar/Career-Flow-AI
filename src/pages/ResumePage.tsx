@@ -29,22 +29,42 @@ type ResumeDraft = {
   languages: string[];
 };
 
+function str(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+function strs(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+}
+
+// Never let a malformed persisted resume (missing arrays, wrong types, null
+// entries) throw while building the edit draft or rendering the profile view.
 function draftFrom(r: ResumeData): ResumeDraft {
   return {
-    fullName: r.fullName ?? "",
-    headline: r.headline ?? "",
-    location: r.location ?? "",
-    email: r.email ?? "",
-    phone: r.phone ?? "",
-    linkedin: r.linkedin ?? "",
-    website: r.website ?? "",
-    summary: r.summary ?? "",
-    skills: [...r.skills],
-    experience: r.experience.map((e) => ({ ...e, bullets: [...e.bullets], technologies: e.technologies ? [...e.technologies] : [] })),
-    education: r.education.map((e) => ({ ...e, details: e.details ? [...e.details] : [] })),
-    projects: r.projects?.map((p) => ({ ...p, technologies: p.technologies ? [...p.technologies] : [] })) ?? [],
-    certifications: r.certifications ? [...r.certifications] : [],
-    languages: r.languages ? [...r.languages] : [],
+    fullName: str(r.fullName),
+    headline: str(r.headline),
+    location: str(r.location),
+    email: str(r.email),
+    phone: str(r.phone),
+    linkedin: str(r.linkedin),
+    website: str(r.website),
+    summary: str(r.summary),
+    skills: strs(r.skills),
+    experience: (Array.isArray(r.experience) ? r.experience : []).map((e) => ({
+      ...e,
+      bullets: strs(e.bullets),
+      technologies: strs(e.technologies),
+    })),
+    education: (Array.isArray(r.education) ? r.education : []).map((e) => ({
+      ...e,
+      details: strs(e.details),
+    })),
+    projects: (Array.isArray(r.projects) ? r.projects : []).map((p) => ({
+      ...p,
+      technologies: strs(p.technologies),
+    })),
+    certifications: strs(r.certifications),
+    languages: strs(r.languages),
   };
 }
 
@@ -232,6 +252,24 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
   const [draft, setDraft] = useState<ResumeDraft>(() => draftFrom(resume));
   const set = <K extends keyof ResumeDraft>(key: K, value: ResumeDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
+
+  // Defensive view copies — a malformed persisted resume must render, not crash.
+  const skills = strs(resume.skills);
+  const experience = (Array.isArray(resume.experience) ? resume.experience : []).map((e) => ({
+    ...e,
+    bullets: strs(e.bullets),
+    technologies: strs(e.technologies),
+  }));
+  const education = (Array.isArray(resume.education) ? resume.education : []).map((e) => ({
+    ...e,
+    details: strs(e.details),
+  }));
+  const projects = (Array.isArray(resume.projects) ? resume.projects : []).map((p) => ({
+    ...p,
+    technologies: strs(p.technologies),
+  }));
+  const certifications = strs(resume.certifications);
+  const languages = strs(resume.languages);
 
   function startEdit() {
     setDraft(draftFrom(resume));
@@ -447,22 +485,22 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             )}
           </Card>
 
-          {resume.skills.length > 0 && (
+          {skills.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Skills</SectionTitle>
               <div className="mt-3 flex flex-wrap gap-2">
-                {resume.skills.map((s) => (
+                {skills.map((s) => (
                   <Chip key={s}>{s}</Chip>
                 ))}
               </div>
             </Card>
           )}
 
-          {resume.experience.length > 0 && (
+          {experience.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Experience</SectionTitle>
               <div className="mt-4 space-y-5">
-                {resume.experience.map((xp, i) => (
+                {experience.map((xp, i) => (
                   <div key={i}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
@@ -491,11 +529,11 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             </Card>
           )}
 
-          {resume.education.length > 0 && (
+          {education.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Education</SectionTitle>
               <div className="mt-4 space-y-4">
-                {resume.education.map((ed, i) => (
+                {education.map((ed, i) => (
                   <div key={i}>
                     <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">
@@ -508,11 +546,11 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             </Card>
           )}
 
-          {resume.projects && resume.projects.length > 0 && (
+          {projects.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Projects</SectionTitle>
               <div className="mt-4 space-y-5">
-                {resume.projects.map((p, i) => (
+                {projects.map((p, i) => (
                   <div key={i}>
                     <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
                       {p.name}
@@ -538,22 +576,22 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
             </Card>
           )}
 
-          {resume.certifications && resume.certifications.length > 0 && (
+          {certifications.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Certifications</SectionTitle>
               <div className="mt-3 flex flex-wrap gap-2">
-                {resume.certifications.map((c) => (
+                {certifications.map((c) => (
                   <Chip key={c}>{c}</Chip>
                 ))}
               </div>
             </Card>
           )}
 
-          {resume.languages && resume.languages.length > 0 && (
+          {languages.length > 0 && (
             <Card className="p-6">
               <SectionTitle>Languages</SectionTitle>
               <div className="mt-3 flex flex-wrap gap-2">
-                {resume.languages.map((l) => (
+                {languages.map((l) => (
                   <Chip key={l}>{l}</Chip>
                 ))}
               </div>

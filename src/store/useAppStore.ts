@@ -1,7 +1,43 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Application, CandidateProfile, JobPosting, ResumeData } from "../lib/types";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { Application, CandidateProfile, JobPosting, JobSearchParams, ResumeData } from "../lib/types";
 import { buildEmailDraft, jobKey } from "../lib/format";
+
+/** An in-flight Apify scrape, persisted so a refresh/navigation can resume it. */
+export interface ActiveScrape {
+  runId: string;
+  params: JobSearchParams;
+  startedAt: number;
+}
+
+/**
+ * localStorage with every access guarded. Corrupt JSON, quota errors, or
+ * private-mode browsers can otherwise throw during persist rehydration and
+ * blank out the whole app on load.
+ */
+const safeStorage = {
+  getItem: (name: string) => {
+    try {
+      return localStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: string) => {
+    try {
+      localStorage.setItem(name, value);
+    } catch {
+      /* quota / private mode — ignore, state stays in memory */
+    }
+  },
+  removeItem: (name: string) => {
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      /* ignore */
+    }
+  },
+};
 
 export interface AppState {
   resume: ResumeData | null;
@@ -10,6 +46,8 @@ export interface AppState {
   savedJobs: JobPosting[];
   applications: Application[];
   scrapedJobs: JobPosting[];
+  lastSearchParams: JobSearchParams | null;
+  activeScrape: ActiveScrape | null;
 
   setResume: (r: ResumeData | null) => void;
   updateResume: (patch: Partial<ResumeData>) => void;
@@ -29,6 +67,8 @@ export interface AppState {
   updateApplication: (id: string, patch: Partial<Application>) => void;
   removeApplication: (id: string) => void;
   addScrapedJobs: (jobs: JobPosting[]) => { added: number; duplicates: number };
+  setLastSearchParams: (params: JobSearchParams) => void;
+  setActiveScrape: (scrape: ActiveScrape | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -40,6 +80,8 @@ export const useAppStore = create<AppState>()(
       savedJobs: [],
       applications: [],
       scrapedJobs: [],
+      lastSearchParams: null,
+      activeScrape: null,
 
       setResume: (resume) => set({ resume }),
       updateResume: (patch) =>
@@ -177,6 +219,10 @@ export const useAppStore = create<AppState>()(
 
       setApplications: (applications) => set({ applications }),
 
+      setLastSearchParams: (params) => set({ lastSearchParams: params }),
+
+      setActiveScrape: (activeScrape) => set({ activeScrape }),
+
       updateApplication: (id, patch) =>
         set((s) => ({
           applications: s.applications.map((a) =>
@@ -227,7 +273,8 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "career-flow:app",
-      version: 3,
+      version: 4,
+      storage: createJSONStorage(() => safeStorage),
       partialize: (s) => ({
         resume: s.resume,
         candidateProfile: s.candidateProfile,
@@ -235,20 +282,33 @@ export const useAppStore = create<AppState>()(
         applications: s.applications,
         searchJobs: s.searchJobs,
         scrapedJobs: s.scrapedJobs,
+        lastSearchParams: s.lastSearchParams,
+        activeScrape: s.activeScrape,
       }),
-      migrate: (persisted, version) => {
+      migrate: (persisted, _version) => {
         const s = (persisted ?? {}) as Partial<AppState>;
-        if (version < 3) {
-          return {
-            resume: s.resume ?? null,
-            candidateProfile: s.candidateProfile ?? null,
-            savedJobs: s.savedJobs ?? [],
-            applications: s.applications ?? [],
-            searchJobs: s.searchJobs ?? [],
-            scrapedJobs: s.scrapedJobs ?? [],
-          };
-        }
-        return s as AppState;
+        const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+        const obj = (v: unknown) =>
+          v && typeof v === "object" && !Array.isArray(v) ? v : null;
+        const scrape = obj(s.activeScrape) as ActiveScrape | null;
+        const activeScrape =
+          scrape &&
+          typeof scrape.runId === "string" &&
+          typeof scrape.startedAt === "number" &&
+          scrape.params &&
+          typeof scrape.params === "object"
+            ? scrape
+            : null;
+        return {
+          resume: obj(s.resume) as ResumeData | null,
+          candidateProfile: obj(s.candidateProfile) as CandidateProfile | null,
+          savedJobs: arr<JobPosting>(s.savedJobs),
+          applications: arr<Application>(s.applications),
+          searchJobs: arr<JobPosting>(s.searchJobs),
+          scrapedJobs: arr<JobPosting>(s.scrapedJobs),
+          lastSearchParams: obj(s.lastSearchParams) as JobSearchParams | null,
+          activeScrape,
+        };
       },
     },
   ),

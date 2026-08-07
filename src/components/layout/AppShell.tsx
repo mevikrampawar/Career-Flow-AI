@@ -7,6 +7,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { Spinner } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 import { BrandLogo } from "../ui/Brand";
+import ErrorBoundary from "../ui/ErrorBoundary";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
@@ -176,7 +177,9 @@ export default function AppShell() {
       {/* Main */}
       <main className="min-w-0 flex-1 pb-24 pt-16 md:ml-64 md:pb-0 md:pt-0">
         <div className="mx-auto w-full max-w-(--container-app) px-margin-mobile py-6 md:px-margin-desktop md:py-10">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 

@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import { useKeys } from "../lib/keys";
-import { searchJobs, DEFAULT_ACTORS } from "../lib/apify";
+import { startScrape, finishScrape, DEFAULT_ACTORS } from "../lib/apify";
 import { scoreJobMatch } from "../lib/groq";
 import { jobDedupeKey, jobKey } from "../lib/format";
 import type { JobPosting, JobSearchParams } from "../lib/types";
@@ -33,6 +33,8 @@ export default function JobsPage() {
   const savedJobs = useAppStore((s) => s.savedJobs);
   const scrapedJobs = useAppStore((s) => s.scrapedJobs);
   const updateJobMatch = useAppStore((s) => s.updateJobMatch);
+  const setLastSearchParams = useAppStore((s) => s.setLastSearchParams);
+  const setActiveScrape = useAppStore((s) => s.setActiveScrape);
   const { keys, hasApify, hasGroq } = useKeys();
   const { push } = useToast();
 
@@ -47,6 +49,8 @@ export default function JobsPage() {
   // Archive keys as of the LAST scrape (before the current results were added),
   // so fresh results don't get mislabelled "Previously scraped".
   const beforeScrapeRef = useRef(new Set(scrapedJobs.map(jobDedupeKey)));
+  // Guards against resuming the same scrape twice (React StrictMode double-mounts).
+  const resumeStartedRef = useRef(false);
 
   async function onScrape(next?: JobSearchParams) {
     const p = next ?? params;
@@ -56,7 +60,7 @@ export default function JobsPage() {
       setError("Enter a job title or keyword.");
       return;
     }
-    if (!hasApify) {
+    if (!hasApify || !keys.apifyApiToken) {
       push("error", "Add your Apify API token in Settings first.");
       navigate("/app/settings");
       return;
@@ -67,8 +71,16 @@ export default function JobsPage() {
       useAppStore.getState().scrapedJobs.map(jobDedupeKey),
     );
     try {
-      const jobs = await searchJobs(keys.apifyApiToken, p, DEFAULT_ACTORS, (msg) =>
-        setProgress(msg),
+      const runId = await startScrape(keys.apifyApiToken, p, DEFAULT_ACTORS);
+      // Persist the run so a refresh mid-hunt resumes instead of losing it.
+      setActiveScrape({ runId, params: p, startedAt: Date.now() });
+      setLastSearchParams(p);
+      const jobs = await finishScrape(
+        keys.apifyApiToken,
+        p.board,
+        runId,
+        p.query,
+        (msg) => setProgress(msg),
       );
       setSearchJobs(jobs);
       setSearched(true);
@@ -91,8 +103,66 @@ export default function JobsPage() {
     } finally {
       setScraping(false);
       setProgress("");
+      setActiveScrape(null);
     }
   }
+
+  // Restore where the user left off: a persisted in-flight scrape resumes
+  // automatically; otherwise the last search form is pre-filled.
+  useEffect(() => {
+    if (resumeStartedRef.current) return;
+    const scrape = useAppStore.getState().activeScrape;
+    if (scrape) {
+      if (hasApify && keys.apifyApiToken) {
+        resumeStartedRef.current = true;
+        setParams(scrape.params);
+        setSearched(false);
+        setScraping(true);
+        setProgress("Resuming your previous hunt…");
+        beforeScrapeRef.current = new Set(
+          useAppStore.getState().scrapedJobs.map(jobDedupeKey),
+        );
+        (async () => {
+          try {
+            const jobs = await finishScrape(
+              keys.apifyApiToken,
+              scrape.params.board,
+              scrape.runId,
+              scrape.params.query,
+              (msg) => setProgress(msg),
+            );
+            setSearchJobs(jobs);
+            setSearched(true);
+            const { added, duplicates } = addScrapedJobs(jobs);
+            if (jobs.length === 0) {
+              push("info", "No jobs found. Try broader keywords or another board.");
+            } else if (added === 0) {
+              push(
+                "success",
+                `You're all caught up — ${jobs.length} jobs found, all already in Scraped Jobs.`,
+              );
+            } else {
+              push(
+                "success",
+                `Resumed hunt — ${jobs.length} jobs. ${added} new saved, ${duplicates} already scraped.`,
+              );
+            }
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Resuming the scrape failed.");
+          } finally {
+            setScraping(false);
+            setProgress("");
+            setActiveScrape(null);
+          }
+        })();
+        return;
+      }
+      // No token anymore — drop the stale run so it stops nagging.
+      setActiveScrape(null);
+    }
+    const last = useAppStore.getState().lastSearchParams;
+    if (last) setParams(last);
+  }, []);
 
   async function onMatch(job: JobPosting) {
     if (!resume || !hasGroq) {

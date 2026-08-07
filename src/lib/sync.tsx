@@ -79,27 +79,46 @@ function pick(kind: SyncKind, s: AppState): unknown {
   }
 }
 
+function asObject(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : null;
+}
+
+function asArray(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : [];
+}
+
+/**
+ * Apply a remote value to local state. Every kind is coerced to a safe shape
+ * and wrapped in its own try/catch so a malformed Firestore payload can never
+ * crash the snapshot handler or block the other kinds from syncing.
+ */
 function apply(kind: SyncKind, value: unknown) {
-  const s = useAppStore.getState();
-  switch (kind) {
-    case "resume":
-      s.setResume(value as ResumeData | null);
-      break;
-    case "candidateProfile":
-      s.setCandidateProfile((value as CandidateProfile | null) ?? null);
-      break;
-    case "savedJobs":
-      s.setSavedJobs((value as JobPosting[] | null) ?? []);
-      break;
-    case "applications":
-      s.setApplications((value as Application[] | null) ?? []);
-      break;
-    case "searchJobs":
-      s.setSearchJobs((value as JobPosting[] | null) ?? []);
-      break;
-    case "scrapedJobs":
-      s.setScrapedJobs?.((value as JobPosting[] | null) ?? []);
-      break;
+  try {
+    const s = useAppStore.getState();
+    switch (kind) {
+      case "resume":
+        s.setResume(asObject(value) as ResumeData | null);
+        break;
+      case "candidateProfile":
+        s.setCandidateProfile(asObject(value) as CandidateProfile | null);
+        break;
+      case "savedJobs":
+        s.setSavedJobs(asArray(value) as JobPosting[]);
+        break;
+      case "applications":
+        s.setApplications(asArray(value) as Application[]);
+        break;
+      case "searchJobs":
+        s.setSearchJobs(asArray(value) as JobPosting[]);
+        break;
+      case "scrapedJobs":
+        s.setScrapedJobs(asArray(value) as JobPosting[]);
+        break;
+    }
+  } catch (e) {
+    console.warn("Sync apply failed for", kind, e);
   }
 }
 
@@ -118,9 +137,13 @@ function readWatermarks(uid: string): Partial<Record<SyncKind, number>> {
 }
 
 function writeWatermark(uid: string, kind: SyncKind, t: number) {
-  const all = readWatermarks(uid);
-  all[kind] = t;
-  localStorage.setItem(watermarkKey(uid), JSON.stringify(all));
+  try {
+    const all = readWatermarks(uid);
+    all[kind] = t;
+    localStorage.setItem(watermarkKey(uid), JSON.stringify(all));
+  } catch {
+    /* private mode / quota — watermark only optimizes ordering, safe to skip */
+  }
 }
 
 export function SyncProvider({ children }: { children: ReactNode }) {
@@ -167,9 +190,18 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
     // If a different user just signed in on this browser, drop the previous
     // user's offline cache and watermark so nothing leaks across accounts.
-    const prevUid = localStorage.getItem(UID_KEY);
+    let prevUid: string | null = null;
+    try {
+      prevUid = localStorage.getItem(UID_KEY);
+    } catch {
+      /* ignore */
+    }
     if (prevUid && prevUid !== uid) {
-      localStorage.removeItem(watermarkKey(prevUid));
+      try {
+        localStorage.removeItem(watermarkKey(prevUid));
+      } catch {
+        /* ignore */
+      }
       useAppStore.persist?.clearStorage?.();
       useAppStore.setState({
         resume: null,
@@ -179,7 +211,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         scrapedJobs: [],
       });
     }
-    localStorage.setItem(UID_KEY, uid);
+    try {
+      localStorage.setItem(UID_KEY, uid);
+    } catch {
+      /* ignore */
+    }
     lastWriteRef.current = readWatermarks(uid);
 
     // Serialize writes per kind: only one setDoc in flight at a time, and a
