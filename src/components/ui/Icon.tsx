@@ -14,11 +14,11 @@ export function Icon({
   return (
     <span
       aria-hidden
-      className={`material-symbols-outlined select-none ${className}`}
+      className={`material-symbols-outlined inline-block select-none align-middle ${className}`}
       style={{
         fontSize: size,
         lineHeight: 1,
-        fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' ${filled ? 600 : 400}, 'GRAD' 0, 'opsz' 24`,
+        fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' ${filled ? 600 : 500}, 'GRAD' 0, 'opsz' 24`,
       }}
     >
       {name}

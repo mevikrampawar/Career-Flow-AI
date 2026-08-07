@@ -4,11 +4,11 @@ type Tone = "neutral" | "primary" | "success" | "warning" | "error" | "info";
 
 const tones: Record<Tone, string> = {
   neutral: "bg-surface-container-high text-on-surface-variant",
-  primary: "bg-primary-fixed text-primary",
+  primary: "bg-primary-fixed text-on-primary-fixed",
   success: "bg-success-container text-on-success-container",
   warning: "bg-warning-container text-warning",
   error: "bg-error-container text-on-error-container",
-  info: "bg-secondary-fixed text-secondary",
+  info: "bg-secondary-fixed text-on-secondary-fixed",
 };
 
 export function Badge({

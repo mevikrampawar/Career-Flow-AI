@@ -177,7 +177,7 @@ export default function ApplicationsPage() {
                           push("success", "Drafted email copied to clipboard.");
                         }}
                         aria-label="Copy drafted email"
-                        className="grid size-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary-fixed hover:text-primary"
+                        className="grid size-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary-fixed hover:text-on-primary-fixed"
                       >
                         <Icon name="content_copy" size={18} />
                       </button>

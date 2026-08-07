@@ -196,7 +196,7 @@ export default function Dashboard() {
               className="group flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-variant bg-surface-container-lowest p-6 transition-all hover:border-outline-variant hover:card-shadow"
             >
               <div className="flex min-w-0 items-center gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary-fixed text-secondary">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary-fixed text-on-secondary-fixed">
                   <Icon name="mail" size={22} />
                 </span>
                 <div className="min-w-0">
@@ -421,7 +421,9 @@ function Stat({
         </div>
         <span
           className={`grid size-10 place-items-center rounded-full ${
-            highlight ? "bg-secondary-fixed text-secondary" : "bg-primary-fixed text-primary"
+            highlight
+              ? "bg-secondary-fixed text-on-secondary-fixed"
+              : "bg-primary-fixed text-on-primary-fixed"
           }`}
         >
           <Icon name={icon} size={22} />
@@ -462,7 +464,7 @@ function NextStepCard({
   cta: string;
 }) {
   const toneCls: Record<typeof tone, string> = {
-    info: "bg-secondary-fixed text-secondary",
+    info: "bg-secondary-fixed text-on-secondary-fixed",
     warning: "bg-warning-container text-warning",
     success: "bg-success-container text-on-success-container",
   };

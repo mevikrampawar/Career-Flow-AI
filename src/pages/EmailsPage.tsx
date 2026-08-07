@@ -218,7 +218,7 @@ function Stat({
 }) {
   const toneCls: Record<typeof tone, string> = {
     neutral: "bg-surface-container-highest text-on-surface-variant",
-    info: "bg-secondary-fixed text-secondary",
+    info: "bg-secondary-fixed text-on-secondary-fixed",
     warning: "bg-warning-container text-warning",
     success: "bg-success-container text-on-success-container",
   };
