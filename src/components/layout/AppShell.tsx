@@ -11,6 +11,7 @@ import { BrandLogo } from "../ui/Brand";
 const NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
   { to: "/app/applications", label: "Applications", icon: "work_history" },
+  { to: "/app/emails", label: "Email Automation", icon: "mail" },
   { to: "/app/jobs", label: "Job Matcher", icon: "auto_awesome" },
   { to: "/app/saved", label: "Saved Jobs", icon: "bookmark" },
   { to: "/app/scraped", label: "Scraped Jobs", icon: "folder_copy" },
@@ -22,7 +23,7 @@ const MOBILE_NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
   { to: "/app/jobs", label: "Matcher", icon: "auto_awesome" },
   { to: "/app/saved", label: "Saved", icon: "bookmark" },
-  { to: "/app/scraped", label: "Scraped", icon: "folder_copy" },
+  { to: "/app/emails", label: "Emails", icon: "mail" },
   { to: "/app/applications", label: "Apps", icon: "work_history" },
   { to: "/app/settings", label: "Settings", icon: "settings" },
 ];

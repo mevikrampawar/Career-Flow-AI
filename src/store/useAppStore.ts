@@ -22,6 +22,8 @@ export interface AppState {
   removeSavedJob: (jobId: string) => void;
   updateJobMatch: (jobId: string, match: NonNullable<JobPosting["match"]>) => void;
   addJobEmail: (job: JobPosting, email: string) => void;
+  removeJobEmail: (job: JobPosting, email: string) => void;
+  setJobEmails: (job: JobPosting, emails: string[]) => void;
   setApplications: (apps: Application[]) => void;
   ensureApplication: (job: JobPosting) => Application;
   updateApplication: (id: string, patch: Partial<Application>) => void;
@@ -115,7 +117,7 @@ export const useAppStore = create<AppState>()(
                       ...a,
                       job: { ...a.job, key },
                       emails,
-                      emailDraft: buildEmailDraft(emails, job, s.resume),
+                      emailDraft: rebuildDraft(existing, emails, s.resume),
                     }
                   : a,
               ),
@@ -152,22 +154,25 @@ export const useAppStore = create<AppState>()(
           const emailNorm = email.trim();
           if (!emailNorm) return s;
           const key = jobKey(job);
-          const withEmail = (j: JobPosting): JobPosting => {
-            if (jobKey(j) !== key) return j;
-            if (j.emails?.includes(emailNorm)) return j;
-            return { ...j, key, emails: [...(j.emails ?? []), emailNorm] };
-          };
-          const applications = s.applications.map((a) => {
-            if (jobKey(a.job) !== key) return a;
-            if (a.emails?.includes(emailNorm)) return a;
-            return { ...a, emails: [...(a.emails ?? []), emailNorm] };
-          });
-          return {
-            searchJobs: s.searchJobs.map(withEmail),
-            savedJobs: s.savedJobs.map(withEmail),
-            scrapedJobs: s.scrapedJobs.map(withEmail),
-            applications,
-          };
+          const current = currentEmails(s, key, job);
+          if (current.includes(emailNorm)) return s;
+          return applyEmails(s, key, [...current, emailNorm]);
+        }),
+
+      removeJobEmail: (job, email) =>
+        set((s) => {
+          const key = jobKey(job);
+          const current = currentEmails(s, key, job);
+          return applyEmails(s, key, current.filter((e) => e !== email));
+        }),
+
+      // Replace the whole contact list at once (used by the Apply page editor
+      // where users can add several addresses from a single text field).
+      setJobEmails: (job, emails) =>
+        set((s) => {
+          const key = jobKey(job);
+          const clean = [...new Set(emails.map((e) => e.trim()).filter(Boolean))];
+          return applyEmails(s, key, clean);
         }),
 
       setApplications: (applications) => set({ applications }),
@@ -248,5 +253,56 @@ export const useAppStore = create<AppState>()(
     },
   ),
 );
+
+/** Current email list for a job across any of its copies, falling back to the passed-in job. */
+function currentEmails(s: AppState, key: string, job: JobPosting): string[] {
+  for (const arr of [s.searchJobs, s.savedJobs, s.scrapedJobs]) {
+    const found = arr.find((j) => jobKey(j) === key);
+    if (found?.emails?.length) return [...found.emails];
+  }
+  return job.emails?.length ? [...job.emails] : [];
+}
+
+/**
+ * Rebuild the ready-to-send email draft for an application. Preserves any
+ * AI-written or user-edited subject/body so recipient changes never discard
+ * the message; falls back to the generic draft when none exists yet.
+ */
+function rebuildDraft(
+  app: Application,
+  emails: string[],
+  resume: ResumeData | null,
+): string | undefined {
+  if (!emails.length) return undefined;
+  if (app.emailSubject || app.emailBody) {
+    return `To: ${emails.join(",")}\nSubject: ${app.emailSubject ?? ""}\n\n${app.emailBody ?? ""}`;
+  }
+  return buildEmailDraft(emails, app.job, resume);
+}
+
+/**
+ * Apply a new contact email list to every copy of a job (search/saved/scraped)
+ * and its linked Application. Rebuilds the ready-to-send email draft so the
+ * draft always matches the current recipients.
+ */
+function applyEmails(s: AppState, key: string, emails: string[]): Partial<AppState> {
+  const withEmail = (j: JobPosting): JobPosting =>
+    jobKey(j) === key ? { ...j, key, emails } : j;
+  const applications = s.applications.map((a) =>
+    jobKey(a.job) === key
+      ? {
+          ...a,
+          emails,
+          emailDraft: rebuildDraft(a, emails, s.resume),
+        }
+      : a,
+  );
+  return {
+    searchJobs: s.searchJobs.map(withEmail),
+    savedJobs: s.savedJobs.map(withEmail),
+    scrapedJobs: s.scrapedJobs.map(withEmail),
+    applications,
+  };
+}
 
 

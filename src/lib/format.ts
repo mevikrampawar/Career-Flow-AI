@@ -99,6 +99,25 @@ export function jobKey(job: {
   return job.key ?? jobDedupeKey(job);
 }
 
+/**
+ * Parse a free-form list of email addresses, splitting on whitespace, commas,
+ * and semicolons so users can paste "a@b.com, c@d.com" or newline-separated
+ * addresses in a single field. Returns deduplicated, trimmed addresses.
+ */
+export function parseEmailList(input: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input.split(/[\s,;]+/)) {
+    const email = raw.trim().replace(/\.$/, "");
+    if (!email) continue;
+    const norm = email.toLowerCase();
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    out.push(email);
+  }
+  return out;
+}
+
 /** Build a prefilled mailto link for reaching a job poster with one click. */
 export function mailtoHref(
   emails: string[],

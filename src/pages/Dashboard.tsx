@@ -18,6 +18,7 @@ export default function Dashboard() {
   const { syncing } = useSync();
   const resume = useAppStore((s) => s.resume);
   const savedJobs = useAppStore((s) => s.savedJobs);
+  const searchJobs = useAppStore((s) => s.searchJobs);
   const applications = useAppStore((s) => s.applications);
   const scrapedJobs = useAppStore((s) => s.scrapedJobs);
 
@@ -48,6 +49,18 @@ export default function Dashboard() {
   const followUps = applications
     .filter((a) => a.status === "applied")
     .sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt));
+
+  const emailSent = applications.filter((a) => a.sentAt).length;
+  const emailReplied = applications.filter((a) => a.lastReplyAt).length;
+  const emailWaiting = applications.filter((a) => a.sentAt && !a.lastReplyAt).length;
+  const emailDrafts = applications.filter(
+    (a) => !a.sentAt && (a.emails?.length || a.emailDraft),
+  ).length;
+  const discoveredEmails = [savedJobs, searchJobs, scrapedJobs]
+    .flat()
+    .filter((j) => j.emails?.length).length;
+  const emailActivity =
+    emailSent + emailReplied + emailWaiting + emailDrafts + discoveredEmails;
 
   const recent = [...applications]
     .sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt))
@@ -176,6 +189,44 @@ export default function Dashboard() {
               to="/app/applications"
             />
           </section>
+
+          {emailActivity > 0 && (
+            <Link
+              to="/app/emails"
+              className="group flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-variant bg-surface-container-lowest p-6 transition-all hover:border-outline-variant hover:card-shadow"
+            >
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary-fixed text-secondary">
+                  <Icon name="mail" size={22} />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="font-headline-md text-headline-md text-on-surface">
+                    Email automation
+                  </h2>
+                  <p className="truncate font-body-sm text-body-sm text-on-surface-variant">
+                    Sent, drafted, and replied — across all your jobs.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <MiniStat label="Sent" value={emailSent} />
+                <MiniStat label="Drafts" value={emailDrafts} />
+                <MiniStat label="Waiting on reply" value={emailWaiting} />
+                <MiniStat label="Replied" value={emailReplied} />
+                {discoveredEmails > 0 && (
+                  <MiniStat label="Emails found" value={discoveredEmails} />
+                )}
+              </div>
+              <span className="ml-auto inline-flex items-center gap-1 font-label-sm text-label-sm text-primary">
+                View dashboard
+                <Icon
+                  name="arrow_forward"
+                  size={14}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
+              </span>
+            </Link>
+          )}
 
           {applications.length === 0 ? (
             <EmptyState
@@ -327,6 +378,15 @@ export default function Dashboard() {
         </>
       )}
     </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="flex flex-col">
+      <span className="font-headline-md text-headline-md text-on-surface">{value}</span>
+      <span className="font-label-sm text-label-sm text-on-surface-variant">{label}</span>
+    </span>
   );
 }
 

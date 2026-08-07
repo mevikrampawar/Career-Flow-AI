@@ -10,13 +10,13 @@ import {
   type GmailThreadMessage,
 } from "../lib/gmail";
 import { generateCoverLetter, generateEmail, tailorResume } from "../lib/groq";
-import { buildEmailBody, buildEmailSubject, jobKey } from "../lib/format";
+import { buildEmailBody, buildEmailSubject, jobKey, parseEmailList } from "../lib/format";
 import {
   STATUS_LABEL,
   STATUS_TONE,
   STATUS_OPTIONS,
 } from "../lib/applications";
-import type { Application } from "../lib/types";
+import type { Application, JobPosting } from "../lib/types";
 import { Button, Spinner } from "../components/ui/Button";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Input, Textarea } from "../components/ui/Input";
@@ -31,6 +31,18 @@ const SAVE_DELAY = 500;
 
 function fullDraft(subject: string, body: string, emails: string[]) {
   return `To: ${emails.join(", ")}\nSubject: ${subject}\n\n${body}`;
+}
+
+/** Pull the subject/body out of a "To:/Subject:/body" draft string. */
+function splitDraft(draft: string): { subject: string; body: string } {
+  const [header = "", ...rest] = draft.split(/\n\n/);
+  const body = rest.join("\n\n");
+  const subject =
+    header
+      .split("\n")
+      .find((l) => l.startsWith("Subject: "))
+      ?.slice("Subject: ".length) ?? "";
+  return { subject, body };
 }
 
 function formatDate(ts?: number): string {
@@ -52,15 +64,32 @@ export default function ApplyPage() {
   const applications = useAppStore((s) => s.applications);
   const ensureApplication = useAppStore((s) => s.ensureApplication);
   const updateApplication = useAppStore((s) => s.updateApplication);
-  const addJobEmail = useAppStore((s) => s.addJobEmail);
+  const removeJobEmail = useAppStore((s) => s.removeJobEmail);
+  const setJobEmails = useAppStore((s) => s.setJobEmails);
 
-  const job = [savedJobs, searchJobs, scrapedJobs]
-    .flat()
-    .find((j) => jobKey(j) === jobId || j.id === jobId);
+  // Resolve the application first so a record whose job was later unsaved or
+  // dropped from the matcher results still opens from the pipeline/dashboard
+  // (its snapshot lives on the Application itself).
+  const existing = applications.find(
+    (a) => jobKey(a.job) === jobId || a.job.id === jobId,
+  );
 
-  const existing = job
-    ? applications.find((a) => jobKey(a.job) === jobKey(job) || a.job.id === job.id)
-    : undefined;
+  const job: JobPosting | undefined =
+    [savedJobs, searchJobs, scrapedJobs]
+      .flat()
+      .find((j) => jobKey(j) === jobId || j.id === jobId) ??
+    (existing
+      ? {
+          id: existing.job.id,
+          key: existing.job.key,
+          board: existing.job.board ?? "linkedin",
+          title: existing.job.title,
+          company: existing.job.company,
+          location: "",
+          description: "",
+          url: existing.job.url ?? "",
+        }
+      : undefined);
 
   const [busy, setBusy] = useState<"tailor" | "letter" | "email" | null>(null);
   const [summary, setSummary] = useState("");
@@ -72,6 +101,7 @@ export default function ApplyPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [newEmail, setNewEmail] = useState("");
+  const [addingEmails, setAddingEmails] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [thread, setThread] = useState<GmailThreadMessage[] | null>(null);
@@ -90,8 +120,9 @@ export default function ApplyPage() {
     setHighlights(existing.tailoredHighlights ?? "");
     setLetter(existing.coverLetter ?? "");
     setNotes(existing.notes ?? "");
-    setEmailSubject(existing.emailSubject ?? "");
-    setEmailBody(existing.emailBody ?? existing.emailDraft ?? "");
+    const draft = existing.emailDraft ? splitDraft(existing.emailDraft) : null;
+    setEmailSubject(existing.emailSubject ?? draft?.subject ?? "");
+    setEmailBody(existing.emailBody ?? draft?.body ?? "");
   }, [existing]);
 
   useEffect(() => {
@@ -215,12 +246,13 @@ export default function ApplyPage() {
     }
   }
 
-  function addEmail() {
-    const email = newEmail.trim();
-    if (!email) return;
-    addJobEmail(currentJob, email);
+  function addEmails() {
+    const parsed = parseEmailList(newEmail);
+    if (parsed.length === 0) return;
+    setJobEmails(currentJob, [...emails, ...parsed]);
     setNewEmail("");
-    push("success", "Email added to this job everywhere.");
+    setAddingEmails(false);
+    push("success", parsed.length === 1 ? "Email added to this job everywhere." : "Emails added to this job everywhere.");
   }
 
   async function sendApplication() {
@@ -626,36 +658,62 @@ export default function ApplyPage() {
             {emails.length > 0 && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {emails.map((email) => (
-                  <a
+                  <span
                     key={email}
-                    href={`mailto:${email}`}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-variant/50 bg-surface px-2.5 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
+                    className="inline-flex items-center gap-1 rounded-md border border-variant/50 bg-surface pl-2.5 pr-1 py-1 font-body-sm text-body-sm text-on-surface"
                   >
-                    <Icon name="mail" size={15} />
+                    <Icon name="mail" size={15} className="text-primary" />
                     {email}
-                  </a>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${email}`}
+                      onClick={() => removeJobEmail(currentJob, email)}
+                      className="grid size-5 place-items-center rounded text-on-surface-variant transition-colors hover:bg-error-container/40 hover:text-error"
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  </span>
                 ))}
               </div>
             )}
-            <div className="mt-3 flex gap-2">
-              <Input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addEmail();
-                  }
-                }}
-                placeholder="Add a recruiter email…"
-                className="max-w-xs font-mono"
-              />
-              <Button variant="secondary" size="md" onClick={addEmail} disabled={!newEmail.trim()}>
-                <Icon name="add" size={18} />
-                Add
-              </Button>
-            </div>
+            {addingEmails ? (
+              <div className="mt-3 space-y-2">
+                <Input
+                  type="text"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addEmails();
+                    }
+                  }}
+                  placeholder="a@company.com, b@company.com…"
+                  className="max-w-md font-mono"
+                />
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="md" onClick={addEmails} disabled={!parseEmailList(newEmail).length}>
+                    <Icon name="add" size={18} />
+                    Add emails
+                  </Button>
+                  <Button variant="ghost" size="md" onClick={() => { setAddingEmails(false); setNewEmail(""); }}>
+                    Cancel
+                  </Button>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  Paste several at once — separated by spaces, commas, or new lines.
+                </p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddingEmails(true)}
+                className="mt-3 inline-flex items-center gap-1.5 font-label-sm text-label-sm text-primary transition-colors hover:text-on-surface"
+              >
+                <Icon name="add" size={16} />
+                {emails.length > 0 ? "Add more emails" : "Add emails"}
+              </button>
+            )}
             <p className="mt-2 font-body-sm text-body-sm text-on-surface-variant">
               Emails attach to this job everywhere — saved, scraped, search, and this application.
             </p>
