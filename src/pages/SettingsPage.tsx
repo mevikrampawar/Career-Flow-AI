@@ -156,6 +156,14 @@ export default function SettingsPage() {
     setGmailDraft(keys.gmailClientId);
   }, [keys.gmailClientId]);
 
+  useEffect(() => {
+    setGroqDraft(keys.groqApiKey);
+  }, [keys.groqApiKey]);
+
+  useEffect(() => {
+    setApifyDraft(keys.apifyApiToken);
+  }, [keys.apifyApiToken]);
+
   function saveGmail() {
     setKeys({ gmailClientId: gmailDraft.trim() });
     push("success", "Gmail Client ID saved.");

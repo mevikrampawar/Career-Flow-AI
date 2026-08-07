@@ -6,6 +6,7 @@ import { useTheme } from "../../lib/theme";
 import { useAppStore } from "../../store/useAppStore";
 import { Spinner } from "../ui/Button";
 import { Icon } from "../ui/Icon";
+import { BrandLogo } from "../ui/Brand";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: "dashboard", end: true },
@@ -67,12 +68,7 @@ export default function AppShell() {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-surface-container-low md:flex">
         <div className="px-6 pb-6 pt-8">
           <NavLink to="/app" className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-lg bg-primary-container text-on-primary-container">
-              <Icon name="work" size={20} filled />
-            </span>
-            <span className="font-display text-headline-md font-bold tracking-tight text-primary">
-              CareerFlow AI
-            </span>
+            <BrandLogo className="h-9 w-auto" />
           </NavLink>
         </div>
 
@@ -156,12 +152,7 @@ export default function AppShell() {
       {/* Mobile top bar */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border-variant bg-surface-container-lowest px-margin-mobile md:hidden">
         <NavLink to="/app" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary-container text-on-primary-container">
-            <Icon name="work" size={18} filled />
-          </span>
-          <span className="font-display text-headline-sm font-bold text-primary">
-            CareerFlow AI
-          </span>
+          <BrandLogo className="h-8 w-auto" />
         </NavLink>
         <div className="flex items-center gap-1">
           <button

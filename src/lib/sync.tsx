@@ -23,12 +23,14 @@ interface SyncStatus {
   syncing: boolean;
   signedIn: boolean;
   lastSynced: number | null;
+  error: string | null;
 }
 
 const SyncContext = createContext<SyncStatus>({
   syncing: false,
   signedIn: false,
   lastSynced: null,
+  error: null,
 });
 
 export function useSync() {
@@ -36,6 +38,7 @@ export function useSync() {
 }
 
 const UID_KEY = "career-flow:uid";
+const WATERMARK_PREFIX = "career-flow:sync-watermark:";
 const KINDS: SyncKind[] = [
   "resume",
   "candidateProfile",
@@ -102,6 +105,24 @@ function apply(kind: SyncKind, value: unknown) {
 
 const EMPTY = "__empty__";
 
+function watermarkKey(uid: string) {
+  return `${WATERMARK_PREFIX}${uid}`;
+}
+
+function readWatermarks(uid: string): Partial<Record<SyncKind, number>> {
+  try {
+    return JSON.parse(localStorage.getItem(watermarkKey(uid)) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeWatermark(uid: string, kind: SyncKind, t: number) {
+  const all = readWatermarks(uid);
+  all[kind] = t;
+  localStorage.setItem(watermarkKey(uid), JSON.stringify(all));
+}
+
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
@@ -109,33 +130,46 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     syncing: false,
     signedIn: Boolean(uid),
     lastSynced: null,
+    error: null,
   });
+  // Serialized remote value we believe is persisted per kind. Only advanced
+  // AFTER a write succeeds, so a failed write is always retried on the next
+  // local change instead of being silently marked as synced.
   const remoteRef = useRef<Partial<Record<SyncKind, string>>>({});
-  // High-water mark of the last local write we sent per kind. Remote snapshots
-  // older than this are stale echoes/cache and must not overwrite local state.
+  // Latest serialized value we WANT persisted per kind.
+  const desiredRef = useRef<Partial<Record<SyncKind, string>>>({});
+  const inFlightRef = useRef<Partial<Record<SyncKind, boolean>>>({});
+  // High-water mark (updatedAt) of the last write we sent per kind. Remote
+  // snapshots older than this are stale echoes/cache and must not overwrite
+  // local state. Persisted so a reload can't let stale Firestore clobber data.
   const lastWriteRef = useRef<Partial<Record<SyncKind, number>>>({});
 
   useEffect(() => {
     const unsubs: Unsubscribe[] = [];
     let cancelled = false;
     remoteRef.current = {};
-    lastWriteRef.current = {};
+    desiredRef.current = {};
+    inFlightRef.current = {};
 
     if (!uid || !isFirebaseConfigured) {
-      setStatus({ syncing: false, signedIn: false, lastSynced: null });
+      setStatus({ syncing: false, signedIn: false, lastSynced: null, error: null });
       return;
     }
 
-    setStatus({ syncing: true, signedIn: true, lastSynced: null });
+    setStatus({ syncing: true, signedIn: true, lastSynced: null, error: null });
 
     // A blank "not yet synced" baseline so the first local change is always
     // written, even before the first snapshot arrives.
-    for (const kind of KINDS) remoteRef.current[kind] = EMPTY;
+    for (const kind of KINDS) {
+      remoteRef.current[kind] = EMPTY;
+      desiredRef.current[kind] = EMPTY;
+    }
 
     // If a different user just signed in on this browser, drop the previous
-    // user's offline cache so nothing leaks across accounts.
+    // user's offline cache and watermark so nothing leaks across accounts.
     const prevUid = localStorage.getItem(UID_KEY);
     if (prevUid && prevUid !== uid) {
+      localStorage.removeItem(watermarkKey(prevUid));
       useAppStore.persist?.clearStorage?.();
       useAppStore.setState({
         resume: null,
@@ -146,33 +180,69 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       });
     }
     localStorage.setItem(UID_KEY, uid);
+    lastWriteRef.current = readWatermarks(uid);
 
-    const writeKind = async (kind: SyncKind, value: unknown) => {
-      const ref = dataDoc(uid, kind);
+    // Serialize writes per kind: only one setDoc in flight at a time, and a
+    // new desired value drains as soon as the current write settles.
+    const pump = async (kind: SyncKind) => {
+      if (cancelled) return;
+      if (inFlightRef.current[kind]) return;
+      const desired = desiredRef.current[kind];
+      const current = remoteRef.current[kind] ?? EMPTY;
+      if (desired === undefined || desired === current) return;
+
+      inFlightRef.current[kind] = true;
       const t = Date.now();
       lastWriteRef.current[kind] = t;
+      const value = JSON.parse(desired) as unknown;
+      const ref = dataDoc(uid, kind);
       const data = isObjectKind(kind)
         ? { [kindKey(kind)]: value ?? null, updatedAt: t }
         : { items: value ?? [], updatedAt: t };
-      await setDoc(ref, data, { merge: false });
-      if (!cancelled) {
-        setStatus((s) => ({ ...s, syncing: false, lastSynced: t }));
+      try {
+        await setDoc(ref, data, { merge: false });
+        if (cancelled) return;
+        remoteRef.current[kind] = desired;
+        writeWatermark(uid, kind, t);
+        setStatus((s) => ({ ...s, syncing: false, lastSynced: t, error: null }));
+      } catch (e) {
+        // Leave remoteRef untouched so the change is retried.
+        console.warn("Firestore write failed:", kind, e);
+        if (!cancelled) {
+          setStatus((s) => ({
+            ...s,
+            syncing: false,
+            error: "Sync to your cloud stalled — retrying. Your data is safe locally.",
+          }));
+        }
+      } finally {
+        if (!cancelled) inFlightRef.current[kind] = false;
       }
+      if (!cancelled && desiredRef.current[kind] !== (remoteRef.current[kind] ?? EMPTY)) {
+        void pump(kind);
+      }
+    };
+
+    const requestSync = (kind: SyncKind, value: unknown) => {
+      desiredRef.current[kind] = JSON.stringify(value ?? null);
+      void pump(kind);
     };
 
     // Local -> Firestore (debounced writes on every store change)
     const subStore = useAppStore.subscribe((state) => {
       if (cancelled) return;
       for (const kind of KINDS) {
-        const value = pick(kind, state);
-        const serialized = JSON.stringify(value ?? null);
-        if (serialized !== remoteRef.current[kind]) {
-          remoteRef.current[kind] = serialized;
-          void writeKind(kind, value);
-        }
+        requestSync(kind, pick(kind, state));
       }
     });
     unsubs.push(subStore);
+
+    // Local state wins on reload: push everything we have right away, then let
+    // snapshots reconcile. This guarantees the newest local edits are never
+    // wiped by a stale Firestore doc.
+    for (const kind of KINDS) {
+      requestSync(kind, pick(kind, useAppStore.getState()));
+    }
 
     // Firestore -> Local (hydrate on sign-in + live cross-device sync)
     for (const kind of KINDS) {
@@ -193,15 +263,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           if (!snap.exists()) {
             // Nothing stored yet — back up the local cache if it exists.
             const local = pick(kind, useAppStore.getState());
-            const localSerialized = JSON.stringify(local ?? null);
             const hasLocal = isObjectKind(kind)
               ? Boolean(local)
               : Array.isArray(local) && local.length > 0;
             if (hasLocal) {
-              remoteRef.current[kind] = localSerialized;
-              void writeKind(kind, local);
+              requestSync(kind, local);
             } else {
               remoteRef.current[kind] = EMPTY;
+              desiredRef.current[kind] = EMPTY;
             }
             return;
           }
@@ -227,7 +296,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         },
         (err) => {
           if (!cancelled) {
-            setStatus((s) => ({ ...s, syncing: false }));
+            setStatus((s) => ({ ...s, syncing: false, error: "Firestore unreachable — changes stay local for now." }));
             console.warn("Firestore sync unavailable:", err);
           }
         },

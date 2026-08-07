@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import { BrandLogo } from "../components/ui/Brand";
 
 function GoogleIcon() {
   return (
@@ -30,12 +31,7 @@ export default function Landing() {
     <div className="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased">
       <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-variant bg-surface px-margin-desktop">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary-container text-on-primary">
-            <Icon name="work" size={20} filled />
-          </span>
-          <span className="font-headline-md text-headline-md font-bold tracking-tight text-primary">
-            CareerFlow AI
-          </span>
+          <BrandLogo className="h-8 w-auto" />
         </Link>
         <div className="flex items-center gap-3">
           <Link to="/signin">
@@ -224,12 +220,7 @@ export default function Landing() {
       <footer className="border-t border-variant bg-surface py-12">
         <div className="mx-auto flex max-w-(--container-app) flex-col items-center justify-between gap-6 px-gutter md:flex-row">
           <div className="flex items-center gap-2.5">
-            <span className="grid size-7 place-items-center rounded-lg bg-primary-container text-on-primary">
-              <Icon name="work" size={18} filled />
-            </span>
-            <span className="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">
-              CareerFlow AI
-            </span>
+            <BrandLogo className="h-7 w-auto" />
           </div>
           <div className="flex gap-6">
             <a className="font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
