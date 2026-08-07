@@ -551,14 +551,15 @@ export default function SettingsPage() {
 
           {guideOpen && (
             <div className="space-y-3 rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4">
-              <h4 className="font-headline-md text-headline-md text-on-surface">Google Cloud setup (once, ~5 min)</h4>
+              <h4 className="font-headline-md text-headline-md text-on-surface">Google Cloud setup — done once, ~5 minutes</h4>
               <p className="font-body-sm text-body-sm text-on-surface-variant">
-                We can't create Google credentials for you — Google only allows that from its own
-                console. This app does everything after these four steps automatically.
+                Your app is already published with Google, so there's no "unverified app" warning and
+                connections don't expire. If you're seeing this, just walk through the four checks below —
+                each link jumps straight to the page you need.
               </p>
               <ol className="list-decimal space-y-3 pl-5 font-body-sm text-body-sm text-on-surface">
                 <li>
-                  <strong className="text-on-surface">Enable the Gmail API</strong> — open{" "}
+                  <strong className="text-on-surface">Gmail API enabled</strong> — open{" "}
                   <a
                     href="https://console.cloud.google.com/apis/library/gmail.googleapis.com"
                     target="_blank"
@@ -567,10 +568,11 @@ export default function SettingsPage() {
                   >
                     console.cloud.google.com/apis/library/gmail.googleapis.com
                   </a>{" "}
-                  (project <code className="font-mono">me-career-flow</code>) and click Enable.
+                  and confirm it says "API enabled" (project <code className="font-mono">me-career-flow</code>).
+                  If not, click <em>Enable</em> — that's all it takes.
                 </li>
                 <li>
-                  <strong className="text-on-surface">Configure the OAuth consent screen</strong> —{" "}
+                  <strong className="text-on-surface">Consent screen approved</strong> — open{" "}
                   <a
                     href="https://console.cloud.google.com/auth/audience"
                     target="_blank"
@@ -578,13 +580,12 @@ export default function SettingsPage() {
                     className="text-primary hover:underline"
                   >
                     console.cloud.google.com/auth/audience
-                  </a>
-                  . Set the user type to <em>External</em> and add your email to{" "}
-                  <em>Test users</em>. You'll see "Google hasn't verified this app" the first time you
-                  connect — that's expected and safe to click through.
+                  </a>{" "}
+                  and check the publishing status is <em>In production</em>. Because it's published,
+                  users connect without any warning screen and nothing expires.
                 </li>
                 <li>
-                  <strong className="text-on-surface">Create a Web client</strong> —{" "}
+                  <strong className="text-on-surface">Web client created</strong> — open{" "}
                   <a
                     href="https://console.cloud.google.com/auth/clients"
                     target="_blank"
@@ -593,24 +594,26 @@ export default function SettingsPage() {
                   >
                     console.cloud.google.com/auth/clients
                   </a>{" "}
-                  → Create credentials → OAuth client ID → <em>Web application</em>. Add these
-                  Authorized JavaScript origins:
+                  and make sure there's a <em>Web application</em> OAuth client with these Authorized
+                  JavaScript origins:
                   <div className="mt-2 flex flex-wrap gap-2">
                     <code className="rounded-md bg-surface-container-high px-2 py-1 font-mono">http://localhost:5174</code>
                     <code className="rounded-md bg-surface-container-high px-2 py-1 font-mono">https://mevikrampawar.github.io</code>
                   </div>
                 </li>
                 <li>
-                  <strong className="text-on-surface">Copy the Client ID</strong> — paste it in the
-                  field above and hit <em>Save Client ID</em>, then <em>Connect Gmail</em>.
+                  <strong className="text-on-surface">Client ID pasted</strong> — the field above
+                  should hold the client ID ending in{" "}
+                  <code className="font-mono">…apps.googleusercontent.com</code>. Hit <em>Save Client ID</em>,
+                  then <em>Connect Gmail</em> and pick the Google account to send from.
                 </li>
               </ol>
-              <div className="flex items-start gap-2 rounded-lg bg-warning-container/60 px-3 py-2 font-body-sm text-body-sm text-warning">
-                <Icon name="info" size={16} className="mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2 rounded-lg bg-success-container/50 px-3 py-2 font-body-sm text-body-sm text-on-surface">
+                <Icon name="verified" size={16} className="mt-0.5 shrink-0 text-success" />
                 <span>
-                  Gmail scopes are "sensitive", so Testing-mode access tokens expire every 7 days —
-                  reconnect then. Publishing the app (Audience tab) removes that limit and the warning
-                  screen.
+                  All four checked? Hit <strong>Connect Gmail</strong> above and you're done. If you ever
+                  reconnect later (after a disconnect or a manual revoke in your Google account), it's
+                  always just one click.
                 </span>
               </div>
             </div>

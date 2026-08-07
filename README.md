@@ -83,6 +83,14 @@ Then enable Pages (Settings → Pages → Source: **GitHub Actions**).
 
 Live site: `https://mevikrampawar.github.io/Career-Flow-AI/`
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for the full threat model, audit results, and the
+one-time hardening steps to run in the Google/Firebase consoles (API key
+restrictions, authorized domains, published consent screen, scopes). Highlights:
+owner-only Firestore rules, Gmail tokens kept in memory only, a build-time CSP,
+and a clean XSS/dependency sweep.
+
 ## Project structure
 
 ```
