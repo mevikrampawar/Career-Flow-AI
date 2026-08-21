@@ -68,16 +68,57 @@ export function timeAgoTs(ts?: number): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-/**
- * Stable identity for a job used to detect duplicates across scrapes.
- * Prefers the canonical URL; falls back to board + title + company.
- */
-export function jobDedupeKey(job: {
+/** Query params that carry campaign/referrer noise, never job identity. */
+const TRACKING_PARAM_RE = /^(utm_[^=]*|fbclid|gclid|mc_cid|mc_eid|ref|source|from)$/i;
+
+type DedupeJob = {
   board?: string;
   title?: string;
   company?: string;
   url?: string;
-}): string {
+};
+
+/**
+ * Canonical form of a posting URL for identity purposes: lowercased
+ * host+path, trailing slashes dropped, tracking params removed, and the
+ * remaining params (including identity params like Indeed's `jk`) sorted
+ * alphabetically so URL variants of one posting collapse to a single key.
+ */
+function canonicalUrl(rawUrl: string): string {
+  if (!rawUrl) return "";
+  try {
+    const u = new URL(rawUrl);
+    // searchParams yields decoded values; re-encode so the rebuilt query
+    // stays unambiguous (values containing & or = can't forge separators).
+    const params = [...u.searchParams.entries()]
+      .filter(([name]) => !TRACKING_PARAM_RE.test(name))
+      .sort((a, b) =>
+        a[0] === b[0] ? (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0) : a[0] < b[0] ? -1 : 1,
+      )
+      .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`);
+    const path = `${u.host}${u.pathname.replace(/\/+$/, "")}`.toLowerCase();
+    return params.length ? `${u.protocol}//${path}?${params.join("&")}` : `${u.protocol}//${path}`;
+  } catch {
+    // Unparseable URL: degrade to the legacy whole-string treatment.
+    return rawUrl.split("?")[0].replace(/\/+$/, "").toLowerCase();
+  }
+}
+
+/**
+ * Stable identity for a job used to detect duplicates across scrapes.
+ * Prefers the canonical URL (tracking params stripped, identity params such as
+ * Indeed's `jk` preserved); falls back to board + title + company when there
+ * is no usable URL.
+ */
+export function jobDedupeKey(job: DedupeJob): string {
+  const norm = (s?: string) => (s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const url = canonicalUrl((job.url ?? "").trim());
+  if (url) return `url:${url}`;
+  return `job:${job.board ?? ""}:${norm(job.title)}:${norm(job.company)}`;
+}
+
+/** Key shape stamped before TASK-007: the ENTIRE query string was stripped, so every Indeed posting collided on `...viewjob`. */
+function legacyDedupeKey(job: DedupeJob): string {
   const norm = (s?: string) => (s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
   const url = (job.url ?? "").split("?")[0].replace(/\/+$/, "").toLowerCase();
   if (url) return `url:${url}`;
@@ -86,8 +127,15 @@ export function jobDedupeKey(job: {
 
 /**
  * Canonical identity for a job, shared across Job Matcher results, Saved Jobs,
- * Scraped Jobs, and Applications. Uses the stamped `key` when present and falls
- * back to the stable dedupe key so older records still resolve to the same job.
+ * Scraped Jobs, and Applications.
+ *
+ * Backward-compatibility strategy: rows scraped before TASK-007 carry
+ * query-stripped keys (all Indeed rows collided on `...viewjob`). We never
+ * rewrite those stored keys here; instead the COMPARISON converges
+ * representations — a stamp we can reproduce from the record itself via the
+ * legacy scheme carries no information beyond the record's own fields, so the
+ * freshly computed canonical key wins and old rows dedupe against new ones.
+ * Stamps we cannot derive locally are trusted verbatim.
  */
 export function jobKey(job: {
   key?: string;
@@ -96,7 +144,8 @@ export function jobKey(job: {
   company?: string;
   url?: string;
 }): string {
-  return job.key ?? jobDedupeKey(job);
+  if (!job.key) return jobDedupeKey(job);
+  return job.key === legacyDedupeKey(job) ? jobDedupeKey(job) : job.key;
 }
 
 /**
