@@ -104,6 +104,7 @@ export default function EmailsPage() {
         tabIndex={0}
         onClick={() => navigate(`/app/apply/${encodeURIComponent(row.key)}`)}
         onKeyDown={(e) => {
+          if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             navigate(`/app/apply/${encodeURIComponent(row.key)}`);

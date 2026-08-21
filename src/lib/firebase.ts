@@ -6,6 +6,7 @@ import {
   signOut as fbSignOut,
   onAuthStateChanged as fbOnAuthStateChanged,
   deleteUser as fbDeleteUser,
+  type Auth,
   type User,
 } from "firebase/auth";
 import {
@@ -120,22 +121,30 @@ export function getGoogleProvider() {
 }
 
 export const signOut = isFirebaseConfigured
-  ? async () => { await fbSignOut(getFirebaseAuth()); }
-  : async () => { if (_auth) _auth.currentUser = null; };
+  ? async (auth: Auth) => { await fbSignOut(auth); }
+  : async (auth?: Auth) => {
+    // Clear the stubbed user on whichever auth instance we were handed,
+    // falling back to our module-level dev auth singleton.
+    const target: any = auth ?? _auth;
+    if (target) target.currentUser = null;
+  };
 
 export const onAuthStateChanged = isFirebaseConfigured
   ? fbOnAuthStateChanged
   : (auth: any, cb: (u: User | null) => void) => {
-    // Immediately invoke with currentUser for dev and return a noop unsubscriber.
+    // Immediately invoke with the passed-in auth's currentUser for dev and
+    // return a noop unsubscriber.
     try {
-      cb(getFirebaseAuth().currentUser ?? null);
+      cb(auth?.currentUser ?? null);
     } catch (e) {
       /* ignore */
     }
     return () => undefined;
   };
 
-export const deleteUser = isFirebaseConfigured ? fbDeleteUser : async () => { throw new Error('deleteUser not available in dev fallback'); };
+export const deleteUser = isFirebaseConfigured
+  ? fbDeleteUser
+  : async (_user?: User) => { throw new Error('deleteUser not available in dev fallback'); };
 
 export { deleteDoc };
 export type { User };
