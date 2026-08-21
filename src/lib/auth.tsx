@@ -10,6 +10,8 @@ import {
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   getFirebaseAuth,
   getGoogleProvider,
@@ -36,6 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
+    // Complete a redirect-based sign-in if one is in flight (fallback path
+    // from signIn below). onAuthStateChanged still drives `user`; consuming
+    // the result here just surfaces/clears any pending redirect state.
+    getRedirectResult(getFirebaseAuth()).catch(() => undefined);
     const unsub = onAuthStateChanged(getFirebaseAuth(), (u) => {
       setUser(u);
       setLoading(false);
@@ -49,11 +55,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "Firebase is not configured. Add VITE_FIREBASE_* env vars to enable Google sign-in.",
       );
     }
-    const result = await signInWithPopup(
-      getFirebaseAuth(),
-      getGoogleProvider(),
-    );
-    setUser(result.user);
+    const auth = getFirebaseAuth();
+    const provider = getGoogleProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+    } catch (err) {
+      // Popup flows fail on Safari/iOS, in-app browsers and strict privacy
+      // setups. Fall back to the full-page redirect flow for those; rethrow
+      // genuine user cancellations (popup-closed-by-user etc.) as-is.
+      const code = (err as { code?: string })?.code;
+      if (
+        code === "auth/popup-blocked" ||
+        code === "auth/operation-not-supported-in-this-environment" ||
+        code === "auth/web-storage-unsupported" ||
+        code === "auth/browser-not-supported"
+      ) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   const signOut = useCallback(async () => {

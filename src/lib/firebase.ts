@@ -3,6 +3,8 @@ import {
   getAuth as fbGetAuth,
   GoogleAuthProvider,
   signInWithPopup as fbSignInWithPopup,
+  signInWithRedirect as fbSignInWithRedirect,
+  getRedirectResult as fbGetRedirectResult,
   signOut as fbSignOut,
   onAuthStateChanged as fbOnAuthStateChanged,
   deleteUser as fbDeleteUser,
@@ -82,25 +84,38 @@ export function getDb(): Firestore {
 // Re-export Firebase APIs when configured; otherwise provide safe dev fallbacks
 // so the UI can be used locally without credentials.
 
+// Dev simulation shared by the popup and redirect fallbacks: mirrors a real
+// Google sign-in result so callers behave identically without credentials.
+function devSignInResult() {
+  const user: User = {
+    uid: "dev-user",
+    displayName: "Dev User",
+    email: "dev@example.com",
+    emailVerified: false,
+    phoneNumber: null,
+    photoURL: null,
+    providerId: "firebase",
+    // Minimal shape; other fields are allowed but not required for the app.
+  } as unknown as User;
+  // Mirror into our stubbed auth.currentUser so other code can read it.
+  if (!_auth) _auth = { currentUser: user };
+  else _auth.currentUser = user;
+  return { user } as any;
+}
+
 export const signInWithPopup = isFirebaseConfigured
   ? fbSignInWithPopup
+  : async (_authArg: any, _provider: any) => devSignInResult();
+
+export const signInWithRedirect = isFirebaseConfigured
+  ? fbSignInWithRedirect
   : async (_authArg: any, _provider: any) => {
-    // Simulate a Google sign-in result for local development.
-    const user: User = {
-      uid: "dev-user",
-      displayName: "Dev User",
-      email: "dev@example.com",
-      emailVerified: false,
-      phoneNumber: null,
-      photoURL: null,
-      providerId: "firebase",
-      // Minimal shape; other fields are allowed but not required for the app.
-    } as unknown as User;
-    // Mirror into our stubbed auth.currentUser so other code can read it.
-    if (!_auth) _auth = { currentUser: user };
-    else _auth.currentUser = user;
-    return { user } as any;
+    devSignInResult();
   };
+
+export const getRedirectResult = isFirebaseConfigured
+  ? fbGetRedirectResult
+  : async () => null;
 
 export const getFirebaseAuth = () => {
   if (!_auth) {
