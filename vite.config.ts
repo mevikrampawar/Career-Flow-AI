@@ -15,7 +15,10 @@ function injectCsp(): Plugin {
     "base-uri 'self'",
     "object-src 'none'",
     "frame-src https://accounts.google.com https://content.googleapis.com https://*.firebaseapp.com https://*.firebase.google.com",
-    "script-src 'self' https://accounts.google.com 'wasm-unsafe-eval'",
+    // apis.google.com is required by Firebase Auth's iframe flow: the SDK
+    // injects https://apis.google.com/js/api.js into this document during
+    // signInWithPopup/signInWithRedirect. Blocking it kills all Google sign-in.
+    "script-src 'self' https://accounts.google.com https://apis.google.com 'wasm-unsafe-eval'",
     "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
