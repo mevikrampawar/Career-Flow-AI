@@ -89,6 +89,13 @@ function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [];
 }
 
+/** True when local state holds actual data (not a fresh device's defaults). */
+function hasLocalData(kind: SyncKind, local: unknown): boolean {
+  return isObjectKind(kind)
+    ? Boolean(local)
+    : Array.isArray(local) && local.length > 0;
+}
+
 /**
  * Apply a remote value to local state. Every kind is coerced to a safe shape
  * and wrapped in its own try/catch so a malformed Firestore payload can never
@@ -130,6 +137,14 @@ function apply(kind: SyncKind, value: unknown) {
 }
 
 const EMPTY = "__empty__";
+
+/**
+ * Module-scoped gate shared with wipe.ts: while an account wipe is deleting
+ * Firestore docs, the sync layer must neither push local state nor react to
+ * snapshots (a just-deleted doc reports exists=false, which would otherwise
+ * "back up" the live cache onto it and resurrect wiped data).
+ */
+export const wipeGate = { current: false };
 
 function watermarkKey(uid: string) {
   return `${WATERMARK_PREFIX}${uid}`;
@@ -173,6 +188,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   // snapshots older than this are stale echoes/cache and must not overwrite
   // local state. Persisted so a reload can't let stale Firestore clobber data.
   const lastWriteRef = useRef<Partial<Record<SyncKind, number>>>({});
+  // Kinds whose first Firestore snapshot has arrived. Until a kind is
+  // hydrated, local state may just be a new device's empty defaults, so it
+  // must never be pushed — otherwise empty docs would overwrite real cloud
+  // data before the snapshot lands.
+  const hydratedRef = useRef<Partial<Record<SyncKind, boolean>>>({});
 
   useEffect(() => {
     const unsubs: Unsubscribe[] = [];
@@ -180,6 +200,10 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     remoteRef.current = {};
     desiredRef.current = {};
     inFlightRef.current = {};
+    hydratedRef.current = {};
+    // Backstop: a gate left stuck by a failed prior wipe must never survive a
+    // uid transition / effect re-run.
+    wipeGate.current = false;
 
     if (!uid || !isFirebaseConfigured) {
       setStatus({ syncing: false, signedIn: false, lastSynced: null, error: null });
@@ -229,7 +253,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     // Serialize writes per kind: only one setDoc in flight at a time, and a
     // new desired value drains as soon as the current write settles.
     const pump = async (kind: SyncKind) => {
-      if (cancelled) return;
+      if (cancelled || wipeGate.current) return;
       if (inFlightRef.current[kind]) return;
       const desired = desiredRef.current[kind];
       const current = remoteRef.current[kind] ?? EMPTY;
@@ -245,7 +269,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         : { items: value ?? [], updatedAt: t };
       try {
         await setDoc(ref, data, { merge: false });
-        if (cancelled) return;
+        // A wipe may have started while this write was in flight — a write
+        // landing after its doc was deleted must not be recorded as persisted.
+        if (cancelled || wipeGate.current) return;
         remoteRef.current[kind] = desired;
         writeWatermark(uid, kind, t);
         setStatus((s) => ({ ...s, syncing: false, lastSynced: t, error: null }));
@@ -268,7 +294,41 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     };
 
     const requestSync = (kind: SyncKind, value: unknown) => {
+      // Account wipe in progress: suppress all sync traffic entirely.
+      if (wipeGate.current) return;
       desiredRef.current[kind] = JSON.stringify(value ?? null);
+      // Before this kind's first snapshot arrives we can't tell a new
+      // device's empty defaults from real local data — hold the write and
+      // let hydrateKind settle local-vs-remote once the snapshot lands.
+      if (!hydratedRef.current[kind]) return;
+      void pump(kind);
+    };
+
+    // First snapshot for a kind: mark it hydrated, then push local ONCE only
+    // if it genuinely diverges from the snapshot baseline (unsynced edits /
+    // offline cache). Otherwise remote wins silently. This replaces the old
+    // "push everything at startup" behavior that clobbered cloud docs on a
+    // new device with six empty writes.
+    const hydrateKind = (kind: SyncKind) => {
+      if (hydratedRef.current[kind]) return;
+      hydratedRef.current[kind] = true;
+      const local = pick(kind, useAppStore.getState());
+      const current = JSON.stringify(local ?? null);
+      const baseline = remoteRef.current[kind] ?? EMPTY;
+      // Empty/default local state never pushes. Against a real cloud baseline
+      // it means local was reset or coerced empty (e.g., a malformed payload
+      // hit apply()) — adopt the remote value instead of clobbering it with
+      // emptiness. Against an EMPTY baseline it is simply satisfied, so no
+      // pointless shell doc gets written for brand-new accounts.
+      if (!hasLocalData(kind, local)) {
+        desiredRef.current[kind] = baseline;
+        return;
+      }
+      if (current === baseline) {
+        desiredRef.current[kind] = baseline;
+        return;
+      }
+      desiredRef.current[kind] = current;
       void pump(kind);
     };
 
@@ -281,12 +341,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     });
     unsubs.push(subStore);
 
-    // Local state wins on reload: push everything we have right away, then let
-    // snapshots reconcile. This guarantees the newest local edits are never
-    // wiped by a stale Firestore doc.
-    for (const kind of KINDS) {
-      requestSync(kind, pick(kind, useAppStore.getState()));
-    }
+    // NOTE: no immediate startup push here. Pushing all kinds before any
+    // snapshot arrives would overwrite real cloud data with a fresh device's
+    // empty defaults; hydrateKind resolves each kind after its first snapshot.
 
     // Firestore -> Local (hydrate on sign-in + live cross-device sync)
     for (const kind of KINDS) {
@@ -294,28 +351,29 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       const sub = onSnapshot(
         ref,
         (snap) => {
-          if (cancelled) return;
+          // During a wipe, ignore snapshots entirely: the just-deleted docs
+          // report exists=false and must not trigger exists=false "backups".
+          if (cancelled || wipeGate.current) return;
 
           if (snap.metadata.hasPendingWrites) {
             // Echo of a write we just sent — local state already matches, and
             // applying it here could clobber a newer local edit.
             const echoed = snap.data()?.[kindKey(kind)] ?? null;
             remoteRef.current[kind] = JSON.stringify(echoed);
+            hydrateKind(kind);
             return;
           }
 
           if (!snap.exists()) {
             // Nothing stored yet — back up the local cache if it exists.
             const local = pick(kind, useAppStore.getState());
-            const hasLocal = isObjectKind(kind)
-              ? Boolean(local)
-              : Array.isArray(local) && local.length > 0;
-            if (hasLocal) {
+            if (hasLocalData(kind, local)) {
               requestSync(kind, local);
             } else {
               remoteRef.current[kind] = EMPTY;
               desiredRef.current[kind] = EMPTY;
             }
+            hydrateKind(kind);
             return;
           }
 
@@ -329,19 +387,41 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           // out state we've already written locally and are waiting to confirm.
           const remoteUpdatedAt = typeof raw.updatedAt === "number" ? raw.updatedAt : 0;
           if (remoteUpdatedAt < (lastWriteRef.current[kind] ?? 0)) {
+            hydrateKind(kind);
             return;
           }
 
-          const current = JSON.stringify(
-            pick(kind, useAppStore.getState()) ?? null,
-          );
+          const localValue = pick(kind, useAppStore.getState());
+          const current = JSON.stringify(localValue ?? null);
+          // Reload protection: on the FIRST snapshot, real local data that
+          // diverges from the cloud baseline is unsynced work — local wins and
+          // hydrateKind pushes it. An empty/default local state never wins,
+          // so a new device adopts the cloud instead of wiping it.
+          const localWins =
+            !hydratedRef.current[kind] &&
+            current !== serialized &&
+            hasLocalData(kind, localValue);
+
           remoteRef.current[kind] = serialized;
-          if (serialized !== current) apply(kind, value);
+          if (!localWins && serialized !== current) apply(kind, value);
+          hydrateKind(kind);
         },
         (err) => {
           if (!cancelled) {
             setStatus((s) => ({ ...s, syncing: false, error: "Firestore unreachable — changes stay local for now." }));
             console.warn("Firestore sync unavailable:", err);
+            // A terminal listener error would otherwise leave this kind
+            // never-hydrated, killing its sync until the uid changes. Mark it
+            // hydrated and seed desiredRef with real local data only, so the
+            // next local edit pushes once connectivity returns. An empty /
+            // default local state leaves the EMPTY baseline untouched. Never
+            // pump or requestSync here — that would push empty defaults over
+            // cloud data we couldn't even read.
+            hydratedRef.current[kind] = true;
+            const local = pick(kind, useAppStore.getState());
+            if (hasLocalData(kind, local)) {
+              desiredRef.current[kind] = JSON.stringify(local ?? null);
+            }
           }
         },
       );

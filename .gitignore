@@ -20,3 +20,6 @@ opencode.json
 .idea/
 .vscode/
 *.tsbuildinfo
+
+# local orchestration planning notes
+.planning/
