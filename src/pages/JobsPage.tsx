@@ -193,15 +193,15 @@ export default function JobsPage() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
             Job Matcher
           </h1>
-          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+          <p className="mt-2 text-body-md text-on-surface-variant">
             Discover roles tailored to your profile and experience.
           </p>
         </div>
         {results.length > 0 && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface-container-lowest px-4 py-2 font-label-md text-label-md text-on-surface">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface-container-lowest px-4 py-2 text-label-md text-on-surface">
             {results.length} results
           </span>
         )}
@@ -256,7 +256,7 @@ export default function JobsPage() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface">
+          <label className="flex items-center gap-2 text-body-sm text-on-surface">
             <input
               type="checkbox"
               checked={params.remoteOnly}
@@ -270,17 +270,17 @@ export default function JobsPage() {
             {scraping ? "Scraping…" : "Hunt jobs"}
           </Button>
         </div>
-        {error && <p className="mt-3 font-body-sm text-body-sm text-error">{error}</p>}
+        {error && <p className="mt-3 text-body-sm text-error">{error}</p>}
       </Card>
 
       {scraping ? (
         <section>
           <div className="mb-6">
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="text-headline-md text-on-surface">
               Hunting on {params.board === "linkedin" ? "LinkedIn" : params.board === "indeed" ? "Indeed" : "Workable"}…
             </h2>
             {progress && (
-              <p className="mt-1 flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+              <p className="mt-1 flex items-center gap-2 text-body-sm text-on-surface-variant">
                 <Spinner className="size-4" /> {progress}
               </p>
             )}
@@ -294,7 +294,7 @@ export default function JobsPage() {
       ) : results.length > 0 ? (
         <section>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="text-headline-md text-on-surface">
               {results.length} results
             </h2>
             <Button size="sm" variant="ghost" onClick={clearResults}>
@@ -344,7 +344,7 @@ export default function JobsPage() {
       )}
 
       {!hasApify && (
-        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 text-body-sm text-warning">
           <Icon name="key" size={18} />
           You need an Apify API token (free tier available) to scrape jobs.{" "}
           <button className="font-semibold underline" onClick={() => navigate("/app/profile")}>
@@ -353,7 +353,7 @@ export default function JobsPage() {
         </p>
       )}
       {!resume && (
-        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 text-body-sm text-warning">
           <Icon name="description" size={18} />
           Upload a resume to unlock AI match scoring.{" "}
           <button className="font-semibold underline" onClick={() => navigate("/app/resume")}>

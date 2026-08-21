@@ -115,14 +115,14 @@ export default function EmailsPage() {
             : "border-border-variant bg-surface-container-lowest hover:border-outline-variant"
         }`}
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container text-label-md font-bold text-primary">
           {row.company.charAt(0).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
+          <span className="block truncate text-body-md font-semibold text-on-surface">
             {row.title}
           </span>
-          <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+          <span className="block truncate text-body-sm text-on-surface-variant">
             {row.company}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -130,14 +130,14 @@ export default function EmailsPage() {
               row.emails.map((email) => (
                 <span
                   key={email}
-                  className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-border-variant/50 bg-surface px-2 py-0.5 font-body-sm text-body-sm text-primary"
+                  className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-border-variant/50 bg-surface px-2 py-0.5 text-body-sm text-primary"
                 >
                   <Icon name="mail" size={14} />
                   <span className="truncate">{email}</span>
                 </span>
               ))
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 font-body-sm text-body-sm text-on-surface-variant">
+              <span className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-body-sm text-on-surface-variant">
                 <Icon name="add_link" size={14} />
                 No address yet
               </span>
@@ -146,7 +146,7 @@ export default function EmailsPage() {
         </span>
         <span className="flex shrink-0 items-center gap-2">
           {row.sentAt && (
-            <span className="hidden font-body-sm text-body-sm text-on-surface-variant sm:inline">
+            <span className="hidden text-body-sm text-on-surface-variant sm:inline">
               Sent {fmt(row.sentAt)}
             </span>
           )}
@@ -174,10 +174,10 @@ export default function EmailsPage() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
             Email automation
           </h1>
-          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+          <p className="mt-2 text-body-md text-on-surface-variant">
             Every contact email across your jobs — what's discovered, drafted, sent, and waiting on a reply.
           </p>
         </div>
@@ -218,10 +218,10 @@ export default function EmailsPage() {
           {discoveredRows.length > 0 && (
             <section>
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="font-headline-md text-headline-md text-on-surface">
+                <h2 className="text-headline-md text-on-surface">
                   Discovered · ready to send
                 </h2>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">
+                <span className="text-body-sm text-on-surface-variant">
                   {discoveredRows.length} job{discoveredRows.length === 1 ? "" : "s"} with contact emails found
                 </span>
               </div>
@@ -233,8 +233,8 @@ export default function EmailsPage() {
           {pipelineRows.length > 0 && (
             <section>
               <div className="mb-3">
-                <h2 className="font-headline-md text-headline-md text-on-surface">Your pipeline</h2>
-                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                <h2 className="text-headline-md text-on-surface">Your pipeline</h2>
+                <p className="mt-1 text-body-sm text-on-surface-variant">
                   Applications with a drafted, sent, or answered email.
                 </p>
               </div>
@@ -272,16 +272,16 @@ function Stat({
     <div className="flex flex-col gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+          <p className="text-label-sm uppercase tracking-wider text-on-surface-variant">
             {label}
           </p>
-          <h3 className="mt-1 font-headline-lg text-headline-lg text-on-surface">{value}</h3>
+          <h3 className="mt-1 text-headline-lg text-on-surface">{value}</h3>
         </div>
         <span className={`grid size-10 place-items-center rounded-full ${toneCls[tone]}`}>
           <Icon name={icon} size={22} />
         </span>
       </div>
-      <p className="mt-auto font-body-sm text-body-sm text-on-surface-variant">{note}</p>
+      <p className="mt-auto text-body-sm text-on-surface-variant">{note}</p>
     </div>
   );
 }

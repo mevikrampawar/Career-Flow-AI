@@ -48,19 +48,19 @@ export default function SignIn() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-surface px-4 font-body-md text-body-md antialiased">
+    <div className="grid min-h-screen place-items-center bg-surface px-4 text-body-md antialiased">
       <div className="w-full max-w-md rounded-xl border border-border-variant bg-surface-container-lowest p-8 shadow-soft">
         <BrandLogo className="mx-auto h-12 w-auto" />
-        <h1 className="mt-5 text-center font-headline-lg text-headline-lg text-on-surface">
+        <h1 className="mt-5 text-center text-headline-lg text-on-surface">
           Welcome to Career Flow AI
         </h1>
-        <p className="mt-2 text-center font-body-sm text-body-sm text-on-surface-variant">
+        <p className="mt-2 text-center text-body-sm text-on-surface-variant">
           Sign in with Google to back up and sync your resume, keys, and applications.
         </p>
 
         {user ? (
           <div className="mt-8 text-center">
-            <p className="mb-4 font-body-md text-body-md text-on-surface">
+            <p className="mb-4 text-body-md text-on-surface">
               Signed in as <strong>{user.email}</strong>
             </p>
             <Button className="w-full" onClick={() => navigate("/app")}>
@@ -70,7 +70,7 @@ export default function SignIn() {
         ) : (
           <>
             {!firebaseEnabled && (
-              <p className="mt-6 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-container px-3 py-2 font-body-sm text-body-sm text-warning">
+              <p className="mt-6 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-container px-3 py-2 text-body-sm text-warning">
                 <Icon name="info" size={18} className="mt-0.5 shrink-0" />
                 <span>
                   Google sign-in is temporarily unavailable. Please try again in a few minutes.
@@ -89,7 +89,7 @@ export default function SignIn() {
               </Button>
             </div>
             {error && (
-              <p className="mt-4 text-center font-body-sm text-body-sm text-error">{error}</p>
+              <p className="mt-4 text-center text-body-sm text-error">{error}</p>
             )}
           </>
         )}

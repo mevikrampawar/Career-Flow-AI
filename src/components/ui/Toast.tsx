@@ -70,7 +70,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   dismiss(t.id);
                   t.action?.onClick();
                 }}
-                className="shrink-0 rounded-md px-2 py-1 font-label-sm text-label-sm font-semibold text-primary underline hover:opacity-80"
+                className="shrink-0 rounded-md px-2 py-1 text-label-sm font-semibold text-primary underline hover:opacity-80"
               >
                 {t.action.label}
               </button>

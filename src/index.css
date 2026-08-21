@@ -219,6 +219,10 @@
   --text-headline-lg--line-height: 1.2;
   --text-headline-lg--letter-spacing: -0.01em;
   --text-headline-lg--font-weight: 600;
+  --text-headline-lg-mobile: 28px;
+  --text-headline-lg-mobile--line-height: 1.2;
+  --text-headline-lg-mobile--letter-spacing: -0.01em;
+  --text-headline-lg-mobile--font-weight: 600;
   --text-headline-md: 24px;
   --text-headline-md--line-height: 1.3;
   --text-headline-md--font-weight: 600;
@@ -278,6 +282,7 @@
   .text-display-lg,
   .text-headline-xl,
   .text-headline-lg,
+  .text-headline-lg-mobile,
   .text-headline-md,
   .text-headline-sm,
   .text-label-md,
@@ -301,9 +306,6 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.25);
   }
-  .card-shadow {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
   .flat {
     box-shadow: none;
   }
@@ -322,4 +324,8 @@
       transform: translate(-20px, 20px) scale(0.95);
     }
   }
+}
+
+@utility card-shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }

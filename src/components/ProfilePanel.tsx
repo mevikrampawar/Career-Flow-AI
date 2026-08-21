@@ -88,7 +88,7 @@ function KeyField({
           {testLabel}
         </Button>
         {saved && (
-          <span className="inline-flex items-center gap-1 font-label-sm text-label-sm text-success">
+          <span className="inline-flex items-center gap-1 text-label-sm text-success">
             <Icon name="check_circle" size={16} filled />
             Saved
           </span>
@@ -208,13 +208,13 @@ export function ProfilePanel() {
               {initial}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate font-label-md text-label-md font-semibold text-on-surface">
+              <div className="truncate text-label-md font-semibold text-on-surface">
                 {user?.displayName ?? "Signed in"}
               </div>
-              <div className="truncate font-body-sm text-body-sm text-on-surface-variant">
+              <div className="truncate text-body-sm text-on-surface-variant">
                 {user?.email}
               </div>
-              <div className="mt-0.5 flex items-center gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
+              <div className="mt-0.5 flex items-center gap-1.5 text-body-sm text-on-surface-variant">
                 {sync.syncing ? (
                   <>
                     <Spinner className="size-3.5" /> Syncing to your cloud…
@@ -287,7 +287,7 @@ export function ProfilePanel() {
             saved={keys.apifyApiToken === apifyDraft.trim() && Boolean(apifyDraft.trim())}
           />
           <div className="flex items-center justify-between gap-4">
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
+            <p className="text-body-sm text-on-surface-variant">
               Remove all locally stored keys.
             </p>
             <Button
@@ -369,14 +369,14 @@ export function ProfilePanel() {
           </div>
 
           {gmail.connected && (
-            <div className="flex items-center gap-2 rounded-lg border border-success/40 bg-success-container/40 px-4 py-3 font-body-sm text-body-sm text-on-surface">
+            <div className="flex items-center gap-2 rounded-lg border border-success/40 bg-success-container/40 px-4 py-3 text-body-sm text-on-surface">
               <Icon name="mark_email_read" size={18} className="text-success" />
               Connected as <span className="font-medium">{gmail.email}</span> — the app can send and read
               application emails for you.
             </div>
           )}
           {gmail.error && (
-            <div className="flex items-center gap-2 rounded-lg border border-error/40 bg-error-container/40 px-4 py-3 font-body-sm text-body-sm text-error">
+            <div className="flex items-center gap-2 rounded-lg border border-error/40 bg-error-container/40 px-4 py-3 text-body-sm text-error">
               <Icon name="error_outline" size={18} />
               {gmail.error}
             </div>
@@ -384,8 +384,8 @@ export function ProfilePanel() {
 
           {gmailGuideOpen && (
             <div className="space-y-3 rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4">
-              <h4 className="font-headline-md text-headline-md text-on-surface">Google Cloud setup — done once, ~5 minutes</h4>
-              <ol className="list-decimal space-y-3 pl-5 font-body-sm text-body-sm text-on-surface">
+              <h4 className="text-headline-md text-on-surface">Google Cloud setup — done once, ~5 minutes</h4>
+              <ol className="list-decimal space-y-3 pl-5 text-body-sm text-on-surface">
                 <li>
                   <strong className="text-on-surface">Gmail API enabled</strong> — open{" "}
                   <ExternalLink href="https://console.cloud.google.com/apis/library/gmail.googleapis.com">
@@ -432,10 +432,10 @@ export function ProfilePanel() {
         <div className="px-5 pb-5">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-error/40 bg-error-container/40 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <p className="font-label-md text-label-md font-semibold text-on-surface">
+              <p className="text-label-md font-semibold text-on-surface">
                 Delete all data and this account
               </p>
-              <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">
+              <p className="mt-0.5 text-body-sm text-on-surface-variant">
                 Removes your resume, jobs, applications, API keys, Gmail
                 connection, cloud data, and the Google account. This can't be
                 undone.
@@ -458,10 +458,10 @@ export function ProfilePanel() {
       title="Delete everything?"
     >
       <div className="space-y-4">
-        <p className="font-body-sm text-body-sm text-on-surface-variant">
+        <p className="text-body-sm text-on-surface-variant">
           This permanently deletes:
         </p>
-        <ul className="list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface">
+        <ul className="list-disc space-y-1 pl-5 text-body-sm text-on-surface">
           <li>Your resume, candidate profile, saved &amp; scraped jobs, and applications</li>
           <li>Your API keys and Gmail connection</li>
           <li>All cloud-synced data for your account</li>

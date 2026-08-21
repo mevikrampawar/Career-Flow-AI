@@ -48,7 +48,7 @@ function JobMetaChips({ job }: { job: JobPosting }) {
       {chips.map((chip) => (
         <span
           key={chip.icon}
-          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-on-surface-variant"
+          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 text-body-sm text-on-surface-variant"
         >
           <Icon name={chip.icon} size={16} />
           {chip.label}
@@ -58,7 +58,7 @@ function JobMetaChips({ job }: { job: JobPosting }) {
         <a
           key={email}
           href={`mailto:${email}`}
-          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
+          className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface px-2 py-1 text-body-sm text-primary hover:bg-surface-container-low"
           title={email}
         >
           <Icon name="mail" size={16} />
@@ -75,10 +75,10 @@ function JobDetail({ icon, label, value }: { icon: string; label: string; value?
     <div className="flex items-start gap-2">
       <Icon name={icon} size={18} className="mt-0.5 shrink-0 text-primary" />
       <div className="min-w-0">
-        <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+        <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
           {label}
         </p>
-        <p className="font-body-sm text-body-sm text-on-surface">{value}</p>
+        <p className="text-body-sm text-on-surface">{value}</p>
       </div>
     </div>
   );
@@ -136,6 +136,7 @@ export function JobCard({
           setOpen(true);
         }}
         onKeyDown={(e) => {
+          if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setOpen(true);
@@ -160,20 +161,20 @@ export function JobCard({
         </div>
 
         <div className="relative z-10">
-          <h3 className="font-headline-md text-headline-md text-on-surface">{job.title}</h3>
-          <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">{job.company}</p>
+          <h3 className="text-headline-md text-on-surface">{job.title}</h3>
+          <p className="mt-0.5 text-body-sm text-on-surface-variant">{job.company}</p>
         </div>
 
         {(job.description || job.snippet) && (
-          <p className="line-clamp-3 font-body-sm text-body-sm text-on-surface-variant">
+          <p className="line-clamp-3 text-body-sm text-on-surface-variant">
             {descriptionText || job.snippet}
           </p>
         )}
 
         {job.match && (
-          <div className="space-y-2 rounded-lg bg-surface-container-low px-4 py-3 font-body-sm text-body-sm">
+          <div className="space-y-2 rounded-lg bg-surface-container-low px-4 py-3 text-body-sm">
             <div className="flex flex-wrap gap-x-4 gap-y-1">
-              <span className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <span className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Strengths
               </span>
               <span className="text-on-surface">
@@ -182,7 +183,7 @@ export function JobCard({
             </div>
             {job.match.gaps.length > 0 && (
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                <span className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                   Gaps
                 </span>
                 <span className="text-warning">{job.match.gaps.slice(0, 2).join(" · ")}</span>
@@ -232,7 +233,7 @@ export function JobCard({
               {onUnsave && (
                 <button
                   onClick={() => onUnsave(jobKey(job))}
-                  className="ml-auto font-label-sm text-label-sm text-on-surface-variant hover:text-error"
+                  className="ml-auto text-label-sm text-on-surface-variant hover:text-error"
                 >
                   Remove
                 </button>
@@ -250,7 +251,7 @@ export function JobCard({
               href={job.url}
               target="_blank"
               rel="noreferrer"
-              className="ml-auto font-label-sm text-label-sm text-primary hover:underline"
+              className="ml-auto text-label-sm text-primary hover:underline"
             >
               View posting
               <Icon name="arrow_outward" size={14} className="ml-0.5 align-middle" />
@@ -261,7 +262,7 @@ export function JobCard({
 
       <Modal open={emailModal} onClose={() => setEmailModal(false)} title="Add a contact email">
         <div className="space-y-4">
-          <p className="font-body-sm text-body-sm text-on-surface-variant">
+          <p className="text-body-sm text-on-surface-variant">
             Attach a recruiter or hiring-team email to <strong>{job.title}</strong> at{" "}
             {job.company}. It'll appear on every copy of this job and its application.
           </p>
@@ -300,7 +301,7 @@ export function JobCard({
             {job.matchScore !== undefined && <MatchScore score={job.matchScore} />}
           </div>
 
-          <p className="font-body-md text-body-md font-medium text-primary">{job.company}</p>
+          <p className="text-body-md font-medium text-primary">{job.company}</p>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <JobDetail icon="location_on" label="Location" value={job.location} />
@@ -315,7 +316,7 @@ export function JobCard({
 
           {job.emails && job.emails.length > 0 && (
             <div>
-              <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <h4 className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Contact emails
               </h4>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -323,7 +324,7 @@ export function JobCard({
                   <a
                     key={email}
                     href={`mailto:${email}`}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border-variant/50 bg-surface px-2.5 py-1 font-body-sm text-body-sm text-primary hover:bg-surface-container-low"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border-variant/50 bg-surface px-2.5 py-1 text-body-sm text-primary hover:bg-surface-container-low"
                   >
                     <Icon name="mail" size={15} />
                     {email}
@@ -343,10 +344,10 @@ export function JobCard({
 
           {descriptionText && (
             <div>
-              <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <h4 className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Description
               </h4>
-              <p className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 font-body-sm text-body-sm text-on-surface">
+              <p className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 text-body-sm text-on-surface">
                 {descriptionText}
               </p>
             </div>
@@ -355,10 +356,10 @@ export function JobCard({
           {job.match && (
             <div className="space-y-3 rounded-lg bg-surface-container-low px-4 py-3">
               <div>
-                <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                <h4 className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                   Strengths
                 </h4>
-                <ul className="mt-1 list-inside list-disc font-body-sm text-body-sm text-on-surface">
+                <ul className="mt-1 list-inside list-disc text-body-sm text-on-surface">
                   {job.match.strengths.map((s) => (
                     <li key={s}>{s}</li>
                   ))}
@@ -366,10 +367,10 @@ export function JobCard({
               </div>
               {job.match.gaps.length > 0 && (
                 <div>
-                  <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                  <h4 className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                     Gaps
                   </h4>
-                  <ul className="mt-1 list-inside list-disc font-body-sm text-body-sm text-warning">
+                  <ul className="mt-1 list-inside list-disc text-body-sm text-warning">
                     {job.match.gaps.map((g) => (
                       <li key={g}>{g}</li>
                     ))}
@@ -378,14 +379,14 @@ export function JobCard({
               )}
               {job.match.suggestedKeywords.length > 0 && (
                 <div>
-                  <h4 className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                  <h4 className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                     Suggested keywords
                   </h4>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {job.match.suggestedKeywords.map((k) => (
                       <span
                         key={k}
-                        className="rounded-md bg-surface-container-high px-2 py-1 font-body-sm text-body-sm text-primary"
+                        className="rounded-md bg-surface-container-high px-2 py-1 text-body-sm text-primary"
                       >
                         {k}
                       </span>
@@ -394,7 +395,7 @@ export function JobCard({
                 </div>
               )}
               {job.match.reasoning && (
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                <p className="text-body-sm text-on-surface-variant">
                   {job.match.reasoning}
                 </p>
               )}

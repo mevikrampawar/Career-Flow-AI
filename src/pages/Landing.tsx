@@ -28,7 +28,7 @@ function GoogleIcon() {
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-surface font-body-md text-body-md text-on-surface antialiased">
+    <div className="min-h-screen bg-surface text-body-md text-on-surface antialiased">
       <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-border-variant bg-surface px-margin-desktop">
         <Link to="/" className="flex items-center gap-2.5">
           <BrandLogo className="h-8 w-auto" />
@@ -56,14 +56,14 @@ export default function Landing() {
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface-container-low px-3 py-1">
               <Icon name="auto_awesome" size={16} filled className="text-primary" />
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+              <span className="text-label-sm uppercase tracking-wider text-on-surface-variant">
                 Powered by Groq AI
               </span>
             </div>
-            <h1 className="mb-6 font-headline-xl text-headline-xl tracking-tight text-on-surface md:text-[64px] md:leading-[1.05]">
+            <h1 className="mb-6 text-headline-xl tracking-tight text-on-surface md:text-[64px] md:leading-[1.05]">
               Automate your job search with AI precision.
             </h1>
-            <p className="mx-auto mb-10 max-w-2xl font-body-lg text-body-lg text-on-surface-variant">
+            <p className="mx-auto mb-10 max-w-2xl text-body-lg text-on-surface-variant">
               Analyze resumes instantly, match with high-intent roles, and let our
               intelligent agents handle the application busywork. Reclaim your time
               and land your dream job faster.
@@ -76,7 +76,7 @@ export default function Landing() {
                 </Button>
               </Link>
             </div>
-            <p className="mt-6 font-body-sm text-body-sm text-outline">
+            <p className="mt-6 text-body-sm text-outline">
               Free to start — bring your own API keys, and your data syncs to your private cloud.
             </p>
           </div>
@@ -86,10 +86,10 @@ export default function Landing() {
       <section className="bg-surface-container-lowest py-24">
         <div className="mx-auto max-w-(--container-app) px-gutter">
           <div className="mb-16 md:mb-24">
-            <h2 className="mb-4 font-headline-lg text-headline-lg text-on-surface">
+            <h2 className="mb-4 text-headline-lg text-on-surface">
               Core Infrastructure
             </h2>
-            <p className="max-w-2xl font-body-md text-body-md text-on-surface-variant">
+            <p className="max-w-2xl text-body-md text-on-surface-variant">
               Built for velocity. Our platform leverages advanced language models to
               parse, match, and prepare job applications with unprecedented accuracy.
             </p>
@@ -105,10 +105,10 @@ export default function Landing() {
                   <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-fixed">
                     <Icon name="troubleshoot" className="text-on-primary-fixed" />
                   </div>
-                  <h3 className="mb-3 font-headline-md text-headline-md text-on-surface">
+                  <h3 className="mb-3 text-headline-md text-on-surface">
                     Deep Resume Analysis
                   </h3>
-                  <p className="max-w-md font-body-md text-body-md text-on-surface-variant">
+                  <p className="max-w-md text-body-md text-on-surface-variant">
                     Upload your PDF. Groq instantly parses your skills, experience and
                     projects, identifying gaps against target roles and suggesting
                     high-impact keywords.
@@ -116,10 +116,10 @@ export default function Landing() {
                 </div>
                 <div className="mt-8 border-t border-border-variant/50 pt-6">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
+                    <span className="text-label-sm text-on-surface-variant">
                       Processing Speed
                     </span>
-                    <span className="font-label-sm text-label-sm text-primary">
+                    <span className="text-label-sm text-primary">
                       ~1.2 seconds
                     </span>
                   </div>
@@ -134,14 +134,14 @@ export default function Landing() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-fixed">
                 <Icon name="auto_awesome" className="text-on-secondary-fixed" />
               </div>
-              <h3 className="mb-3 font-headline-md text-headline-md text-on-surface">
+              <h3 className="mb-3 text-headline-md text-on-surface">
                 AI Match Scoring
               </h3>
-              <p className="mb-6 flex-grow font-body-md text-body-md text-on-surface-variant">
+              <p className="mb-6 flex-grow text-body-md text-on-surface-variant">
                 Every job is scored against your resume with strengths, gaps and
                 keyword suggestions — so you know exactly where you stand.
               </p>
-              <Link to="/app/jobs" className="inline-flex items-center gap-2 font-label-md text-label-md text-primary transition-colors hover:text-primary-container">
+              <Link to="/app/jobs" className="inline-flex items-center gap-2 text-label-md text-primary transition-colors hover:text-primary-container">
                 See how it works
                 <Icon name="arrow_forward" size={16} />
               </Link>
@@ -151,14 +151,14 @@ export default function Landing() {
               <div className="flex-1">
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border-variant bg-surface px-3 py-1">
                   <span className="h-2 w-2 rounded-full bg-accent-lime" />
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">
+                  <span className="text-label-sm text-on-surface-variant">
                     Real-time Data
                   </span>
                 </div>
-                <h3 className="mb-4 font-headline-lg text-headline-lg text-on-surface">
+                <h3 className="mb-4 text-headline-lg text-on-surface">
                   Precision Job Matcher
                 </h3>
-                <p className="mb-6 max-w-lg font-body-md text-body-md text-on-surface-variant">
+                <p className="mb-6 max-w-lg text-body-md text-on-surface-variant">
                   Scrape live openings from LinkedIn, Indeed and Workable via Apify.
                   Our matching algorithm scores semantic similarity between your
                   parsed skills and the raw job description requirements.
@@ -166,19 +166,19 @@ export default function Landing() {
                 <ul className="space-y-3">
                   <li className="flex items-center gap-3">
                     <Icon name="check_circle" className="text-primary" size={20} />
-                    <span className="font-body-sm text-body-sm text-on-surface">
+                    <span className="text-body-sm text-on-surface">
                       Filter by remote, hybrid, or on-site
                     </span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon name="check_circle" className="text-primary" size={20} />
-                    <span className="font-body-sm text-body-sm text-on-surface">
+                    <span className="text-body-sm text-on-surface">
                       Salary transparency extraction
                     </span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon name="check_circle" className="text-primary" size={20} />
-                    <span className="font-body-sm text-body-sm text-on-surface">
+                    <span className="text-body-sm text-on-surface">
                       Tailored summaries and cover letters for every shortlist
                     </span>
                   </li>
@@ -187,10 +187,10 @@ export default function Landing() {
               <div className="w-full flex-1 rounded-lg border border-border-variant bg-surface p-6 shadow-sm">
                 <div className="mb-4 flex items-start justify-between border-b border-border-variant pb-4">
                   <div>
-                    <div className="font-label-md text-label-md text-on-surface">
+                    <div className="text-label-md text-on-surface">
                       Senior Frontend Engineer
                     </div>
-                    <div className="font-body-sm text-body-sm text-on-surface-variant">
+                    <div className="text-body-sm text-on-surface-variant">
                       Stripe · Remote
                     </div>
                   </div>
@@ -200,10 +200,10 @@ export default function Landing() {
                 </div>
                 <div className="flex items-start justify-between opacity-50">
                   <div>
-                    <div className="font-label-md text-label-md text-on-surface">
+                    <div className="text-label-md text-on-surface">
                       Fullstack Developer
                     </div>
-                    <div className="font-body-sm text-body-sm text-on-surface-variant">
+                    <div className="text-body-sm text-on-surface-variant">
                       Vercel · Hybrid
                     </div>
                   </div>
@@ -223,17 +223,17 @@ export default function Landing() {
             <BrandLogo className="h-7 w-auto" />
           </div>
           <div className="flex gap-6">
-            <a className="font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
+            <a className="text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
               Privacy
             </a>
-            <a className="font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
+            <a className="text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
               Terms
             </a>
-            <a className="font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
+            <a className="text-body-sm text-on-surface-variant transition-colors hover:text-primary" href="#">
               Contact
             </a>
           </div>
-          <div className="font-body-sm text-body-sm text-outline">
+          <div className="text-body-sm text-outline">
             Client-side by design · Groq · Apify · Firebase
           </div>
         </div>

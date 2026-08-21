@@ -122,10 +122,10 @@ export function CandidateProfileCard() {
               ))}
             </div>
             <div>
-              <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Screening answers
               </p>
-              <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">
+              <p className="mt-0.5 text-body-sm text-on-surface-variant">
                 Common questions to prefill on application forms.
               </p>
               <div className="mt-3 space-y-3">
@@ -193,7 +193,7 @@ export function CandidateProfileCard() {
           </div>
         ) : !candidateProfile ? (
           <div className="flex items-center justify-between gap-4 rounded-lg bg-surface-container-low px-4 py-3">
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
+            <p className="text-body-sm text-on-surface-variant">
               Add your contact details, work authorization, and screening answers once — they'll be
               reused for every application.
             </p>
@@ -206,10 +206,10 @@ export function CandidateProfileCard() {
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-headline-lg text-headline-lg text-on-surface">
+                <h2 className="text-headline-lg text-on-surface">
                   {candidateProfile.fullName ?? "Profile"}
                 </h2>
-                <p className="mt-0.5 font-body-md text-body-md text-on-surface-variant">
+                <p className="mt-0.5 text-body-md text-on-surface-variant">
                   {candidateProfile.yearsExperience
                     ? `${candidateProfile.yearsExperience}${candidateProfile.location ? ` · ${candidateProfile.location}` : ""}`
                     : candidateProfile.location ?? ""}
@@ -222,7 +222,7 @@ export function CandidateProfileCard() {
             <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
               {fields.map((f) => (
                 <div key={f.label} className="flex items-baseline gap-2">
-                  <span className="shrink-0 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                  <span className="shrink-0 text-label-sm uppercase tracking-wide text-on-surface-variant">
                     {f.label}
                   </span>
                   {f.href && !f.href.startsWith("mailto:") ? (
@@ -230,12 +230,12 @@ export function CandidateProfileCard() {
                       href={f.href.startsWith("http") ? f.href : `https://${f.href}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="min-w-0 truncate font-body-sm text-body-sm text-primary hover:underline"
+                      className="min-w-0 truncate text-body-sm text-primary hover:underline"
                     >
                       {f.value}
                     </a>
                   ) : (
-                    <span className="min-w-0 truncate font-body-sm text-body-sm text-on-surface">
+                    <span className="min-w-0 truncate text-body-sm text-on-surface">
                       {f.value}
                     </span>
                   )}
@@ -244,14 +244,14 @@ export function CandidateProfileCard() {
             </div>
             {candidateProfile.screeningAnswers.length > 0 && (
               <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 py-3">
-                <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                   Screening answers
                 </p>
                 <dl className="mt-2 space-y-2">
                   {candidateProfile.screeningAnswers.map((a, i) => (
                     <div key={i}>
-                      <dt className="font-body-sm text-body-sm font-medium text-on-surface">{a.question}</dt>
-                      <dd className="font-body-sm text-body-sm text-on-surface-variant">{a.answer}</dd>
+                      <dt className="text-body-sm font-medium text-on-surface">{a.question}</dt>
+                      <dd className="text-body-sm text-on-surface-variant">{a.answer}</dd>
                     </div>
                   ))}
                 </dl>

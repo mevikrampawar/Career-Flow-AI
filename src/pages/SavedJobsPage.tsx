@@ -47,10 +47,10 @@ export default function SavedJobsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+        <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
           Saved Jobs
         </h1>
-        <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+        <p className="mt-2 text-body-md text-on-surface-variant">
           Jobs you've bookmarked — apply, prep, or match them against your resume.
         </p>
       </header>

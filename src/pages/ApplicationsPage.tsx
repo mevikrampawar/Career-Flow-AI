@@ -57,10 +57,10 @@ export default function ApplicationsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
             Applications
           </h1>
-          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+          <p className="mt-2 text-body-md text-on-surface-variant">
             Track every application from draft to offer. Click a row to prep & take notes.
           </p>
         </div>
@@ -118,6 +118,7 @@ export default function ApplicationsPage() {
                   navigate(`/app/apply/${encodeURIComponent(jobKey(app.job))}`);
                 }}
                 onKeyDown={(e) => {
+                  if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     navigate(`/app/apply/${encodeURIComponent(jobKey(app.job))}`);
@@ -134,14 +135,14 @@ export default function ApplicationsPage() {
                     }}
                     className="flex min-w-0 flex-1 items-center gap-4 text-left"
                   >
-                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container text-label-md font-bold text-primary">
                       {app.job.company.charAt(0).toUpperCase()}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
+                      <span className="block truncate text-body-md font-semibold text-on-surface">
                         {app.job.title}
                       </span>
-                  <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+                  <span className="block truncate text-body-sm text-on-surface-variant">
                     {app.job.company} · {fmt(app.appliedAt ?? app.createdAt)}
                     {app.notes ? " · has notes" : ""}
                     {app.tailoredHighlights || app.coverLetter ? " · has prep" : ""}
@@ -151,7 +152,7 @@ export default function ApplicationsPage() {
               <div className="flex items-center gap-2">
                 {app.lastReplyAt && (
                   <span
-                    className="inline-flex items-center gap-1 font-label-sm text-label-sm text-warning"
+                    className="inline-flex items-center gap-1 text-label-sm text-warning"
                     title={`Reply received ${new Date(app.lastReplyAt).toLocaleString()}`}
                   >
                     <Icon name="mark_email_unread" size={16} filled />
@@ -210,7 +211,7 @@ export default function ApplicationsPage() {
       >
         {removing && (
           <div className="space-y-5">
-            <p className="font-body-md text-body-md text-on-surface-variant">
+            <p className="text-body-md text-on-surface-variant">
               Remove the application record for{" "}
               <span className="font-medium text-on-surface">{removing.job.title}</span> at{" "}
               {removing.job.company}? Your saved job stays untouched, so you can apply again

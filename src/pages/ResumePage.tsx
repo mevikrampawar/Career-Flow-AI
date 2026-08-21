@@ -153,7 +153,7 @@ export default function ResumePage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <header>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-lg md:text-headline-lg">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-lg">
             Resume
           </h1>
           {resume && !busy && (
@@ -163,7 +163,7 @@ export default function ResumePage() {
             </Button>
           )}
         </div>
-        <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+        <p className="mt-2 text-body-md text-on-surface-variant">
           Upload a PDF. We extract your profile and analyze it with Groq.
           {resume ? " This will re-analyze your current resume from scratch." : ""}
         </p>
@@ -190,7 +190,7 @@ export default function ResumePage() {
         {busy ? (
           <div className="flex flex-col items-center gap-4">
             <Spinner className="size-8 text-primary" />
-            <p className="font-body-md text-body-md text-on-surface">{progress}</p>
+            <p className="text-body-md text-on-surface">{progress}</p>
           </div>
         ) : (
           <>
@@ -198,10 +198,10 @@ export default function ResumePage() {
               <Icon name="cloud_upload" size={40} className="text-primary" />
             </div>
             <div className="flex flex-col gap-2">
-              <span className="font-headline-md text-headline-md text-on-surface">
+              <span className="text-headline-md text-on-surface">
                 {resume ? "Upload a new resume" : "Drag & drop your resume"}
               </span>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">
+              <span className="text-body-sm text-on-surface-variant">
                 PDF only · parsed locally in your browser · re-analyzes everything
               </span>
             </div>
@@ -234,7 +234,7 @@ export default function ResumePage() {
       )}
 
       {!hasGroq && (
-        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 font-body-sm text-body-sm text-warning">
+        <p className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning-container px-4 py-3 text-body-sm text-warning">
           <Icon name="key" size={18} />
           You need a Groq API key (free) to analyze your resume.{" "}
           <button className="font-semibold underline" onClick={() => navigate("/app/profile")}>
@@ -330,8 +330,8 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface">Your profile</h1>
-          <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+          <h1 className="text-headline-lg text-on-surface">Your profile</h1>
+          <p className="mt-1 text-body-sm text-on-surface-variant">
             {resume.fileName}
           </p>
         </div>
@@ -466,13 +466,13 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
           <Card className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-headline-lg text-headline-lg text-on-surface">
+                <h2 className="text-headline-lg text-on-surface">
                   {resume.fullName ?? "Untitled"}
                 </h2>
-                <p className="mt-0.5 font-body-md text-body-md text-on-surface-variant">
+                <p className="mt-0.5 text-body-md text-on-surface-variant">
                   {[resume.headline, resume.location].filter(Boolean).join(" · ") || "—"}
                 </p>
-                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                <p className="mt-1 text-body-sm text-on-surface-variant">
                   {[resume.email, resume.phone, resume.linkedin, resume.website].filter(Boolean).join(" · ") || ""}
                 </p>
               </div>
@@ -481,7 +481,7 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
               </Badge>
             </div>
             {resume.summary && (
-              <p className="mt-4 font-body-md text-body-md text-on-surface">{resume.summary}</p>
+              <p className="mt-4 text-body-md text-on-surface">{resume.summary}</p>
             )}
           </Card>
 
@@ -503,15 +503,15 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
                 {experience.map((xp, i) => (
                   <div key={i}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
+                      <h4 className="text-body-lg font-semibold text-on-surface">
                         {xp.title}
                       </h4>
-                      <span className="font-body-sm text-body-sm text-on-surface-variant">
+                      <span className="text-body-sm text-on-surface-variant">
                         {[xp.startDate, xp.endDate ?? (xp.current ? "Present" : undefined)].filter(Boolean).join(" – ")}
                       </span>
                     </div>
-                    <p className="font-body-md text-body-md font-medium text-primary">{xp.company}</p>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 font-body-sm text-body-sm text-on-surface-variant">
+                    <p className="text-body-md font-medium text-primary">{xp.company}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-body-sm text-on-surface-variant">
                       {xp.bullets.map((b, j) => (
                         <li key={j}>{b}</li>
                       ))}
@@ -535,8 +535,8 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
               <div className="mt-4 space-y-4">
                 {education.map((ed, i) => (
                   <div key={i}>
-                    <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">
+                    <h4 className="text-body-lg font-semibold text-on-surface">{ed.degree}</h4>
+                    <p className="text-body-sm text-on-surface-variant">
                       {ed.institution}
                       {ed.endDate ? ` · ${ed.endDate}` : ""}
                     </p>
@@ -552,14 +552,14 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
               <div className="mt-4 space-y-5">
                 {projects.map((p, i) => (
                   <div key={i}>
-                    <h4 className="font-body-lg text-body-lg font-semibold text-on-surface">
+                    <h4 className="text-body-lg font-semibold text-on-surface">
                       {p.name}
                     </h4>
                     {p.description && (
-                      <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">{p.description}</p>
+                      <p className="mt-1 text-body-sm text-on-surface-variant">{p.description}</p>
                     )}
                     {p.link && (
-                      <a href={p.link.startsWith("http") ? p.link : `https://${p.link}`} target="_blank" rel="noreferrer" className="mt-1 inline-block font-body-sm text-body-sm text-primary hover:underline">
+                      <a href={p.link.startsWith("http") ? p.link : `https://${p.link}`} target="_blank" rel="noreferrer" className="mt-1 inline-block text-body-sm text-primary hover:underline">
                         {p.link}
                       </a>
                     )}
@@ -605,7 +605,7 @@ function ResumeView({ resume, onReanalyze }: { resume: ResumeData; onReanalyze: 
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-headline-md text-headline-md text-on-surface">{children}</h3>
+    <h3 className="text-headline-md text-on-surface">{children}</h3>
   );
 }
 
@@ -688,7 +688,7 @@ function ExperienceEditor({
       {value.map((xp, i) => (
         <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
           <div className="flex items-center justify-between">
-            <span className="font-label-md text-label-md text-on-surface">
+            <span className="text-label-md text-on-surface">
               {xp.title || xp.company || `Experience ${i + 1}`}
             </span>
             <RemoveButton onClick={() => remove(i)} label="Remove experience" />
@@ -709,7 +709,7 @@ function ExperienceEditor({
             <Field label="End date">
               <Input value={xp.endDate ?? ""} onChange={(e) => update(i, { endDate: e.target.value })} placeholder="Present" />
             </Field>
-            <label className="flex items-center gap-2 self-end pb-2 font-body-sm text-body-sm text-on-surface">
+            <label className="flex items-center gap-2 self-end pb-2 text-body-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={Boolean(xp.current)}
@@ -728,7 +728,7 @@ function ExperienceEditor({
             />
           </Field>
           <div>
-            <p className="mb-2 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+            <p className="mb-2 text-label-sm uppercase tracking-wide text-on-surface-variant">
               Technologies
             </p>
             <ChipListField
@@ -769,7 +769,7 @@ function EducationEditor({
       {value.map((ed, i) => (
         <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
           <div className="flex items-center justify-between">
-            <span className="font-label-md text-label-md text-on-surface">
+            <span className="text-label-md text-on-surface">
               {ed.degree || ed.institution || `Education ${i + 1}`}
             </span>
             <RemoveButton onClick={() => remove(i)} label="Remove education" />
@@ -828,7 +828,7 @@ function ProjectEditor({
       {value.map((p, i) => (
         <div key={i} className="space-y-3 rounded-lg border border-border-variant bg-surface-container-lowest p-4">
           <div className="flex items-center justify-between">
-            <span className="font-label-md text-label-md text-on-surface">
+            <span className="text-label-md text-on-surface">
               {p.name || `Project ${i + 1}`}
             </span>
             <RemoveButton onClick={() => remove(i)} label="Remove project" />
@@ -850,7 +850,7 @@ function ProjectEditor({
             />
           </Field>
           <div>
-            <p className="mb-2 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+            <p className="mb-2 text-label-sm uppercase tracking-wide text-on-surface-variant">
               Technologies
             </p>
             <ChipListField

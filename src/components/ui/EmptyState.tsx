@@ -23,9 +23,9 @@ export function EmptyState({
       <span className="relative grid size-16 place-items-center rounded-2xl border border-border-variant bg-surface-container-lowest shadow-soft">
         <Icon name={icon} size={32} className="text-primary" />
       </span>
-      <h3 className="relative font-headline-md text-headline-md text-on-surface">{title}</h3>
+      <h3 className="relative text-headline-md text-on-surface">{title}</h3>
       {description && (
-        <p className="relative max-w-md font-body-md text-body-md text-on-surface-variant">
+        <p className="relative max-w-md text-body-md text-on-surface-variant">
           {description}
         </p>
       )}

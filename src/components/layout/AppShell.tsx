@@ -65,7 +65,7 @@ export default function AppShell() {
   if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
-        <div className="flex flex-col items-center gap-3 font-body-sm text-body-sm text-on-surface-variant">
+        <div className="flex flex-col items-center gap-3 text-body-sm text-on-surface-variant">
           <Spinner className="size-6 text-primary" />
           Loading your account…
         </div>
@@ -126,14 +126,14 @@ export default function AppShell() {
           <div className="border-t border-border-variant pt-4">
             <button
               onClick={toggleTheme}
-              className="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
+              className="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-label-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               <Icon name={theme === "dark" ? "light_mode" : "dark_mode"} size={20} filled />
               {theme === "dark" ? "Light mode" : "Dark mode"}
             </button>
             {signedIn && (
-              <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-border-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface-variant">
+              <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-border-variant bg-surface-container-lowest px-3 py-2 text-body-sm text-on-surface-variant">
                 {syncing ? (
                   <>
                     <Spinner className="size-4" /> Syncing…

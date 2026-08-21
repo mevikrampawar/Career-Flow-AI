@@ -35,23 +35,23 @@ export default class ErrorBoundary extends Component<Props, State> {
             <Icon name="error" size={24} filled />
           </div>
           <div>
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="text-headline-md text-on-surface">
               Something went wrong
             </h2>
-            <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+            <p className="mt-1 text-body-sm text-on-surface-variant">
               This section hit an unexpected error. Your data is safe.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               onClick={() => (window.location.hash = "#/app")}
-              className="rounded-lg bg-primary px-4 py-2 font-label-md text-label-md font-semibold text-on-primary transition-opacity hover:opacity-90"
+              className="rounded-lg bg-primary px-4 py-2 text-label-md font-semibold text-on-primary transition-opacity hover:opacity-90"
             >
               Return to dashboard
             </button>
             <button
               onClick={() => this.setState({ error: null })}
-              className="rounded-lg border border-border-variant px-4 py-2 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container"
+              className="rounded-lg border border-border-variant px-4 py-2 text-label-md text-on-surface transition-colors hover:bg-surface-container"
             >
               Try again
             </button>

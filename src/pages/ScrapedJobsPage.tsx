@@ -112,10 +112,10 @@ export default function ScrapedJobsPage() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
             Scraped Jobs
           </h1>
-          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+          <p className="mt-2 text-body-md text-on-surface-variant">
             Every job you've scraped, auto-saved and de-duplicated. New hunches land here
             automatically.
           </p>
@@ -175,7 +175,7 @@ export default function ScrapedJobsPage() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 font-body-sm text-body-sm text-on-surface">
+          <label className="flex items-center gap-2 text-body-sm text-on-surface">
             <input
               type="checkbox"
               checked={remoteOnly}
@@ -185,7 +185,7 @@ export default function ScrapedJobsPage() {
             Remote only
           </label>
           <div className="ml-auto flex items-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full border border-border-variant bg-surface-container-lowest px-3 py-1.5 font-label-md text-label-md text-on-surface">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border-variant bg-surface-container-lowest px-3 py-1.5 text-label-md text-on-surface">
               <Icon name="inventory_2" size={16} className="text-primary" />
               {filtered.length} / {scrapedJobs.length}
             </span>
@@ -252,7 +252,7 @@ export default function ScrapedJobsPage() {
         onClose={() => setConfirmOpen(false)}
         title="Flush all scraped jobs?"
       >
-        <p className="font-body-md text-body-md text-on-surface-variant">
+        <p className="text-body-md text-on-surface-variant">
           {scrapedJobs.length} scraped job{scrapedJobs.length === 1 ? "" : "s"} will be
           permanently removed from your account. Saved jobs are kept. If a future hunt finds
           the same posting again, it will be added back as new.

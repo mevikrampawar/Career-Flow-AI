@@ -76,12 +76,12 @@ export default function Dashboard() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-headline-lg text-headline-lg-mobile text-on-surface md:font-headline-xl md:text-headline-xl">
+          <h1 className="text-headline-lg-mobile text-on-surface md:text-headline-xl">
             {user?.displayName
               ? `Welcome back, ${user.displayName.split(" ")[0]}.`
               : "Welcome to CareerFlow"}
           </h1>
-          <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
+          <p className="mt-2 text-body-md text-on-surface-variant">
             Your job hunt at a glance — matches, applications, and what's next.
           </p>
         </div>
@@ -97,14 +97,14 @@ export default function Dashboard() {
         <section className="rounded-xl border border-border-variant bg-surface-container-lowest p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-headline-md text-headline-md text-on-surface">
+              <h2 className="text-headline-md text-on-surface">
                 Set up your pipeline
               </h2>
-              <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+              <p className="mt-1 text-body-sm text-on-surface-variant">
                 Three quick steps and you're hunting.
               </p>
             </div>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">
+            <span className="text-label-sm text-on-surface-variant">
               {pending.length} remaining
             </span>
           </div>
@@ -124,8 +124,8 @@ export default function Dashboard() {
                 <span
                   className={
                     c.done
-                      ? "font-body-md text-body-md text-on-surface-variant line-through"
-                      : "font-body-md text-body-md text-on-surface"
+                      ? "text-body-md text-on-surface-variant line-through"
+                      : "text-body-md text-on-surface"
                   }
                 >
                   {c.label}
@@ -200,10 +200,10 @@ export default function Dashboard() {
                   <Icon name="mail" size={22} />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="font-headline-md text-headline-md text-on-surface">
+                  <h2 className="text-headline-md text-on-surface">
                     Email automation
                   </h2>
-                  <p className="truncate font-body-sm text-body-sm text-on-surface-variant">
+                  <p className="truncate text-body-sm text-on-surface-variant">
                     Sent, drafted, and replied — across all your jobs.
                   </p>
                 </div>
@@ -217,7 +217,7 @@ export default function Dashboard() {
                   <MiniStat label="Emails found" value={discoveredEmails} />
                 )}
               </div>
-              <span className="ml-auto inline-flex items-center gap-1 font-label-sm text-label-sm text-primary">
+              <span className="ml-auto inline-flex items-center gap-1 text-label-sm text-primary">
                 View dashboard
                 <Icon
                   name="arrow_forward"
@@ -246,7 +246,7 @@ export default function Dashboard() {
             <>
               {(drafts.length > 0 || followUps.length > 0) && (
                 <section>
-                  <h2 className="mb-4 font-headline-md text-headline-md text-on-surface">
+                  <h2 className="mb-4 text-headline-md text-on-surface">
                     Next steps
                   </h2>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -297,12 +297,12 @@ export default function Dashboard() {
               {recent.length > 0 && (
                 <section>
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="font-headline-md text-headline-md text-on-surface">
+                    <h2 className="text-headline-md text-on-surface">
                       Recent activity
                     </h2>
                     <Link
                       to="/app/applications"
-                      className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline"
+                      className="inline-flex items-center gap-1 text-label-md text-primary hover:underline"
                     >
                       View all
                       <Icon name="arrow_forward" size={16} />
@@ -315,14 +315,14 @@ export default function Dashboard() {
                         to={`/app/apply/${encodeURIComponent(jobKey(app.job))}`}
                         className="flex items-center gap-4 rounded-xl border border-border-variant bg-surface-container-lowest p-4 transition-all hover:border-outline-variant hover:card-shadow"
                       >
-                        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-label-md text-label-md font-bold text-primary">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container text-label-md font-bold text-primary">
                           {app.job.company.charAt(0).toUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate font-body-md text-body-md font-semibold text-on-surface">
+                          <span className="block truncate text-body-md font-semibold text-on-surface">
                             {app.job.title}
                           </span>
-                          <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+                          <span className="block truncate text-body-sm text-on-surface-variant">
                             {app.job.company} · updated {timeAgoTs(app.updatedAt ?? app.createdAt)}
                           </span>
                         </span>
@@ -341,12 +341,12 @@ export default function Dashboard() {
           {topJobs.length > 0 && (
             <section>
               <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-headline-md text-headline-md text-on-surface">
+                <h2 className="text-headline-md text-on-surface">
                   Best matches
                 </h2>
                 <Link
                   to="/app/saved"
-                  className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-label-md text-primary hover:underline"
                 >
                   View all
                   <Icon name="arrow_forward" size={16} />
@@ -384,8 +384,8 @@ export default function Dashboard() {
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
     <span className="flex flex-col">
-      <span className="font-headline-md text-headline-md text-on-surface">{value}</span>
-      <span className="font-label-sm text-label-sm text-on-surface-variant">{label}</span>
+      <span className="text-headline-md text-on-surface">{value}</span>
+      <span className="text-label-sm text-on-surface-variant">{label}</span>
     </span>
   );
 }
@@ -414,10 +414,10 @@ function Stat({
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+          <p className="text-label-sm uppercase tracking-wider text-on-surface-variant">
             {label}
           </p>
-          <h3 className="mt-1 font-headline-lg text-headline-lg text-on-surface">{value}</h3>
+          <h3 className="mt-1 text-headline-lg text-on-surface">{value}</h3>
         </div>
         <span
           className={`grid size-10 place-items-center rounded-full ${
@@ -431,12 +431,12 @@ function Stat({
       </div>
       <div className="mt-auto flex items-center gap-2">
         {badge && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-highest px-2 py-1 font-label-sm text-label-sm text-primary">
+          <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-highest px-2 py-1 text-label-sm text-primary">
             <Icon name="trending_up" size={14} />
             {value > 0 ? `+${value}` : "0"}
           </span>
         )}
-        <span className="font-body-sm text-body-sm text-on-surface-variant">{note}</span>
+        <span className="text-body-sm text-on-surface-variant">{note}</span>
         <Icon
           name="arrow_forward"
           size={14}
@@ -477,14 +477,14 @@ function NextStepCard({
         <Icon name={icon} size={22} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-body-md text-body-md font-semibold text-on-surface">
+        <span className="block text-body-md font-semibold text-on-surface">
           {title}
         </span>
-        <span className="block truncate font-body-sm text-body-sm text-on-surface-variant">
+        <span className="block truncate text-body-sm text-on-surface-variant">
           {desc}
         </span>
       </span>
-      <span className="inline-flex shrink-0 items-center gap-1 font-label-sm text-label-sm text-primary">
+      <span className="inline-flex shrink-0 items-center gap-1 text-label-sm text-primary">
         {cta}
         <Icon
           name="arrow_forward"

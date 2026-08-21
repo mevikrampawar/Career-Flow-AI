@@ -166,8 +166,8 @@ export default function ApplyPage() {
   if (!job) {
     return (
       <div className="mx-auto max-w-md text-center">
-        <h1 className="font-headline-lg text-headline-lg text-on-surface">Job not found</h1>
-        <p className="mt-2 font-body-sm text-body-sm text-on-surface-variant">
+        <h1 className="text-headline-lg text-on-surface">Job not found</h1>
+        <p className="mt-2 text-body-sm text-on-surface-variant">
           This job isn't in your saved, search, or scraped lists anymore.
         </p>
         <Link to="/app/jobs" className="mt-6 inline-block">
@@ -371,7 +371,7 @@ export default function ApplyPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link
         to="/app/applications"
-        className="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant transition-colors hover:text-primary"
+        className="inline-flex items-center gap-1 text-label-sm text-on-surface-variant transition-colors hover:text-primary"
       >
         <Icon name="arrow_back" size={16} />
         Applications
@@ -380,17 +380,17 @@ export default function ApplyPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container font-headline-md text-headline-md font-bold text-primary">
+            <span className="grid size-12 shrink-0 place-items-center rounded-lg border border-border-variant bg-surface-container text-headline-md font-bold text-primary">
               {currentJob.company.charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <h1 className="truncate font-headline-lg text-headline-lg text-on-surface">
+              <h1 className="truncate text-headline-lg text-on-surface">
                 {currentJob.title}
               </h1>
-              <p className="mt-1 font-body-md text-body-md font-medium text-primary">
+              <p className="mt-1 text-body-md font-medium text-primary">
                 {currentJob.company}
               </p>
-              <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+              <p className="mt-1 text-body-sm text-on-surface-variant">
                 {[currentJob.location, currentJob.employmentType, currentJob.salary].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
@@ -398,7 +398,7 @@ export default function ApplyPage() {
           {currentJob.matchScore !== undefined && (
             <div className="shrink-0 text-center">
               <MatchScore score={currentJob.matchScore} size="md" />
-              <div className="mt-1 font-label-sm text-label-sm text-on-surface-variant">
+              <div className="mt-1 text-label-sm text-on-surface-variant">
                 <ScoreLabel score={currentJob.matchScore} />
               </div>
             </div>
@@ -429,12 +429,12 @@ export default function ApplyPage() {
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-headline-md text-headline-md text-on-surface">Stage</h2>
-            <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+            <h2 className="text-headline-md text-on-surface">Stage</h2>
+            <p className="mt-1 text-body-sm text-on-surface-variant">
               Where is this one right now?
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
+          <span className="inline-flex items-center gap-1.5 text-body-sm text-on-surface-variant">
             <Icon name="cloud_done" size={16} className={existing ? "text-success" : "text-outline-variant"} />
             {savedAt ? "Saved" : "Auto-saves"}
           </span>
@@ -447,7 +447,7 @@ export default function ApplyPage() {
                 key={s}
                 type="button"
                 onClick={() => commitStatus(s)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-label-sm text-label-sm transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-label-sm transition-colors ${
                   active
                     ? "border-primary bg-primary-container text-on-primary-container"
                     : "border-border-variant bg-surface-container-lowest text-on-surface-variant hover:border-outline-variant hover:text-on-surface"
@@ -469,7 +469,7 @@ export default function ApplyPage() {
           })}
         </div>
         {existing?.appliedAt && (
-          <p className="mt-3 font-body-sm text-body-sm text-on-surface-variant">
+          <p className="mt-3 text-body-sm text-on-surface-variant">
             Applied on {new Date(existing.appliedAt).toLocaleDateString()}.
             {existing.sentAt ? ` Email sent ${formatDate(existing.sentAt)}.` : ""}
           </p>
@@ -491,7 +491,7 @@ export default function ApplyPage() {
           {summary || highlights ? (
             <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 py-3">
               {summary && (
-                <p className="font-body-md text-body-md text-on-surface">{summary}</p>
+                <p className="text-body-md text-on-surface">{summary}</p>
               )}
               {highlights && (
                 <ul className="mt-3 space-y-1.5">
@@ -501,7 +501,7 @@ export default function ApplyPage() {
                     .filter(Boolean)
                     .slice(0, 6)
                     .map((h, i) => (
-                      <li key={i} className="flex gap-2 font-body-sm text-body-sm text-on-surface-variant">
+                      <li key={i} className="flex gap-2 text-body-sm text-on-surface-variant">
                         <Icon name="check_circle" size={16} className="mt-0.5 shrink-0 text-primary" />
                         <span>{h}</span>
                       </li>
@@ -510,7 +510,7 @@ export default function ApplyPage() {
               )}
             </div>
           ) : (
-            <p className="rounded-lg bg-surface-container-low px-4 py-3 font-body-sm text-body-sm text-on-surface-variant">
+            <p className="rounded-lg bg-surface-container-low px-4 py-3 text-body-sm text-on-surface-variant">
               No tailored summary yet. Hit <strong>Tailor</strong> to generate one from your resume
               and this job description.
             </p>
@@ -573,7 +573,7 @@ export default function ApplyPage() {
               )}
             </Button>
             {letter.trim() && (
-              <span className="font-body-sm text-body-sm text-on-surface-variant">
+              <span className="text-body-sm text-on-surface-variant">
                 Attached as cover-letter.txt when sent via Gmail.
               </span>
             )}
@@ -609,18 +609,18 @@ export default function ApplyPage() {
           {emailSubject ? (
             <>
               <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 py-3">
-                <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                   Subject
                 </p>
-                <p className="mt-1 font-body-md text-body-md font-medium text-on-surface">
+                <p className="mt-1 text-body-md font-medium text-on-surface">
                   {emailSubject}
                 </p>
               </div>
               <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 py-3">
-                <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                   Body
                 </p>
-                <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap font-body-sm text-body-sm text-on-surface">
+                <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap text-body-sm text-on-surface">
                   {emailBody}
                 </pre>
               </div>
@@ -656,7 +656,7 @@ export default function ApplyPage() {
                     </>
                   )}
                 </Button>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">
+                <span className="text-body-sm text-on-surface-variant">
                   {emails.length > 0
                     ? `Sends to ${emails.join(", ")}`
                     : "Add a contact email below before sending."}
@@ -664,14 +664,14 @@ export default function ApplyPage() {
               </div>
             </>
           ) : (
-            <p className="rounded-lg bg-surface-container-low px-4 py-3 font-body-sm text-body-sm text-on-surface-variant">
+            <p className="rounded-lg bg-surface-container-low px-4 py-3 text-body-sm text-on-surface-variant">
               No email drafted yet. Hit <strong>Create email</strong> to write a subject + body for
               this role from your resume{hasGroq ? " with Groq" : ""}.
             </p>
           )}
 
           <div className="border-t border-border-variant/50 pt-4">
-            <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+            <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
               Contact email{emails.length === 1 ? "" : "s"}
             </p>
             {emails.length > 0 && (
@@ -679,7 +679,7 @@ export default function ApplyPage() {
                 {emails.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface pl-2.5 pr-1 py-1 font-body-sm text-body-sm text-on-surface"
+                    className="inline-flex items-center gap-1 rounded-md border border-border-variant/50 bg-surface pl-2.5 pr-1 py-1 text-body-sm text-on-surface"
                   >
                     <Icon name="mail" size={15} className="text-primary" />
                     {email}
@@ -719,7 +719,7 @@ export default function ApplyPage() {
                     Cancel
                   </Button>
                 </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                <p className="text-body-sm text-on-surface-variant">
                   Paste several at once — separated by spaces, commas, or new lines.
                 </p>
               </div>
@@ -727,19 +727,19 @@ export default function ApplyPage() {
               <button
                 type="button"
                 onClick={() => setAddingEmails(true)}
-                className="mt-3 inline-flex items-center gap-1.5 font-label-sm text-label-sm text-primary transition-colors hover:text-on-surface"
+                className="mt-3 inline-flex items-center gap-1.5 text-label-sm text-primary transition-colors hover:text-on-surface"
               >
                 <Icon name="add" size={16} />
                 {emails.length > 0 ? "Add more emails" : "Add emails"}
               </button>
             )}
-            <p className="mt-2 font-body-sm text-body-sm text-on-surface-variant">
+            <p className="mt-2 text-body-sm text-on-surface-variant">
               Emails attach to this job everywhere — saved, scraped, search, and this application.
             </p>
           </div>
 
           <div className="border-t border-border-variant/50 pt-4">
-            <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+            <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
               Send
             </p>
             {gmail.connected ? (
@@ -753,7 +753,7 @@ export default function ApplyPage() {
                   Send application
                 </Button>
                 {!canSend && (
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">
+                  <span className="text-body-sm text-on-surface-variant">
                     {emails.length === 0
                       ? "Add a contact email above."
                       : !emailSubject
@@ -761,14 +761,14 @@ export default function ApplyPage() {
                         : "Ready when you are."}
                   </span>
                 )}
-                <div className="flex w-full flex-wrap gap-x-5 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
+                <div className="flex w-full flex-wrap gap-x-5 gap-y-1 text-body-sm text-on-surface-variant">
                   <span>From: {gmail.email}</span>
                   <span>To: {emails.join(", ") || "—"}</span>
                   <span>Attachment: {attachments.map((a) => a.filename).join(", ") || "none"}</span>
                 </div>
               </div>
             ) : (
-              <div className="mt-2 flex items-start gap-2 rounded-lg bg-warning-container/60 px-4 py-3 font-body-sm text-body-sm text-warning">
+              <div className="mt-2 flex items-start gap-2 rounded-lg bg-warning-container/60 px-4 py-3 text-body-sm text-warning">
                 <Icon name="info" size={16} className="mt-0.5 shrink-0" />
                 <span>
                   Gmail isn't connected.{" "}
@@ -819,11 +819,11 @@ export default function ApplyPage() {
           />
           <div className="p-5 pt-2">
             {thread === null ? (
-              <p className="font-body-sm text-body-sm text-on-surface-variant">
+              <p className="text-body-sm text-on-surface-variant">
                 {gmail.connected ? "Loading the thread…" : "Connect Gmail to read replies."}
               </p>
             ) : thread.length === 0 ? (
-              <p className="font-body-sm text-body-sm text-on-surface-variant">
+              <p className="text-body-sm text-on-surface-variant">
                 Couldn't load the thread right now.
               </p>
             ) : (
@@ -838,19 +838,19 @@ export default function ApplyPage() {
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="font-body-sm text-body-sm font-medium text-on-surface">
+                        <span className="text-body-sm font-medium text-on-surface">
                           {inbound ? "Received from" : "Sent to"} {inbound ? m.from : m.to}
                         </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
+                        <span className="text-body-sm text-on-surface-variant">
                           {new Date(Number(m.internalDate)).toLocaleString()}
                         </span>
                       </div>
                       {m.subject && (
-                        <p className="mt-1 font-label-sm text-label-sm text-on-surface-variant">
+                        <p className="mt-1 text-label-sm text-on-surface-variant">
                           {m.subject}
                         </p>
                       )}
-                      <p className="mt-1 whitespace-pre-wrap font-body-sm text-body-sm text-on-surface">
+                      <p className="mt-1 whitespace-pre-wrap text-body-sm text-on-surface">
                         {m.body || m.snippet}
                       </p>
                     </div>
@@ -863,7 +863,7 @@ export default function ApplyPage() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="font-body-sm text-body-sm text-on-surface-variant">
+        <p className="text-body-sm text-on-surface-variant">
           Everything here auto-saves to this application and syncs to your account.
         </p>
         <Button variant="secondary" onClick={() => navigate("/app/applications")}>
@@ -873,14 +873,14 @@ export default function ApplyPage() {
       </div>
 
       {busy && (
-        <div className="flex items-center justify-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+        <div className="flex items-center justify-center gap-2 text-body-sm text-on-surface-variant">
           <Spinner className="size-4" /> Generating with Groq…
         </div>
       )}
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Send this application?" wide>
         <div className="space-y-4">
-          <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4 font-body-sm text-body-sm text-on-surface">
+          <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4 text-body-sm text-on-surface">
             <p><span className="text-on-surface-variant">From:</span> {gmail.email}</p>
             <p><span className="text-on-surface-variant">To:</span> {emails.join(", ")}</p>
             <p><span className="text-on-surface-variant">Subject:</span> {emailSubject}</p>
@@ -890,21 +890,21 @@ export default function ApplyPage() {
           </div>
           {profileFields.length > 0 && (
             <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4">
-              <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Profile
               </p>
               <div className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
                 {profileFields.map((f) => (
                   <div key={f.label} className="flex items-baseline gap-2">
-                    <span className="shrink-0 font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+                    <span className="shrink-0 text-label-sm uppercase tracking-wide text-on-surface-variant">
                       {f.label}
                     </span>
-                    <span className="truncate font-body-sm text-body-sm text-on-surface">{f.value}</span>
+                    <span className="truncate text-body-sm text-on-surface">{f.value}</span>
                   </div>
                 ))}
               </div>
               {candidateProfile?.screeningAnswers.length ? (
-                <p className="mt-2 font-body-sm text-body-sm text-on-surface-variant">
+                <p className="mt-2 text-body-sm text-on-surface-variant">
                   {candidateProfile.screeningAnswers.length} saved screening answer
                   {candidateProfile.screeningAnswers.length === 1 ? "" : "s"} ready for forms.
                 </p>
@@ -913,19 +913,19 @@ export default function ApplyPage() {
           )}
           {letter.trim() && (
             <div className="rounded-lg border border-outline-variant/70 bg-surface-container-lowest p-4">
-              <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+              <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
                 Cover letter
               </p>
-              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap font-body-sm text-body-sm text-on-surface">
+              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-body-sm text-on-surface">
                 {letter}
               </pre>
             </div>
           )}
           <div>
-            <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
+            <p className="text-label-sm uppercase tracking-wide text-on-surface-variant">
               Body
             </p>
-            <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 font-body-sm text-body-sm text-on-surface">
+            <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-container-low px-4 py-3 text-body-sm text-on-surface">
               {emailBody}
             </pre>
           </div>
@@ -937,7 +937,7 @@ export default function ApplyPage() {
               <Icon name="send" size={16} />
               {sending ? "Sending…" : "Send application"}
             </Button>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
+            <p className="text-body-sm text-on-surface-variant">
               Sends from your Gmail, marks this Applied, and tracks replies.
             </p>
           </div>
