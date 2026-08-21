@@ -90,8 +90,13 @@ export function KeysProvider({ children }: { children: ReactNode }) {
     };
 
     let unsub: (() => void) | undefined;
+    let cancelled = false;
     fetchKeysFromFirestore(uid)
       .then((remote) => {
+        // Effect was cleaned up while the fetch was in flight (sign-out,
+        // account switch, StrictMode remount): drop the stale result instead
+        // of applying another account's keys or leaking the listener.
+        if (cancelled) return;
         apply(remote);
         if (!remote) {
           // The keys document doesn't exist yet — back it up from the local
@@ -109,6 +114,7 @@ export function KeysProvider({ children }: { children: ReactNode }) {
       .finally(() => setSyncing(false));
 
     return () => {
+      cancelled = true;
       unsub?.();
     };
   }, [user?.uid]);
